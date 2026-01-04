@@ -1,0 +1,12 @@
+Situsest - The Text File Publisher
+
+Situsest is my attempt to create a static site generator.  There does
+not appear to be anything available that exactly provides what I am
+looking for in a static site generator so I decided to just write my
+own and see where it goes.
+
+To build and run from the git repo:
+  > autoreconf --install
+  > ./configure
+  > make
+  > src/kspt
