@@ -27,6 +27,7 @@ struct gstate {
 	int silent, verbose;
 	char *input_dir;
 	char *output_dir;
+	char **file_list;
 };
 
 #endif /* not SITUSEST_H */

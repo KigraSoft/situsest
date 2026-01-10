@@ -32,31 +32,23 @@
 static struct gstate gstate = { 0, 0, "./", "./public_www" };
 
 #include "arg-parse.c"
+#include "gen-file-tree.c"
 
 int
 main(int argc, char *argv[])
 {
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
-	printf ("OUTPUT_DIR = %s\nOUTPUT_DIR = %s\n"
+	printf ("INPUT_DIR = %s\nOUTPUT_DIR = %s\n"
 		"VERBOSE = %s\nSILENT = %s\n",
 		gstate.input_dir,
 		gstate.output_dir,
 		gstate.verbose ? "yes" : "no",
 		gstate.silent ? "yes": "no");
 
-	DIR *dp;
-	struct dirent *ep;
+	struct file_list_node *files = calloc(1, sizeof (struct file_list_node));
+	get_file_list(gstate.input_dir, files);
+	diag_print_file_list(files);
 
-	dp = opendir(gstate.input_dir);
-	if (dp != NULL) {
-		while (ep = readdir(dp)) {
-			printf("> %s\n", ep->d_name);
-		}
-		(void) closedir(dp);
-	} else {
-		perror("Couldn't open the directory");
-	}
-	
 	exit(0);
 }
