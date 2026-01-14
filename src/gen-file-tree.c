@@ -43,14 +43,36 @@ one(const struct dirent *entry)
 	}
 }
 
+static int
+file_filter(const struct dirent *entry)
+{
+	if (fnmatch("*", entry->d_name, FNM_PERIOD)) {
+		return 0;
+	} else {
+		if (entry->d_type == DT_DIR) {
+			return 1;
+		} else {
+			if (fnmatch(gstate.cur_pattern, entry->d_name, FNM_PERIOD)) {
+				return 0;
+			} else {
+				return 1;
+			}
+		}
+	}
+}
+
 int
 diag_print_file_list(struct file_list_node *file_list)
 {
 	struct file_list_node *cur_file = file_list;
 	printf("DIAG:  Print file list\n");
 	while (cur_file != NULL) {
-		printf("%s\n", cur_file->lname);
+		// this test is needed if last file in root is a dir with no matching files
+		if (cur_file->lname_len > 0) {
+			printf("%s\n", cur_file->lname);
+		}
 		cur_file = cur_file->next_file;
+	
 	}
 
 	return 0;
@@ -63,7 +85,7 @@ print_fnode(char *preface, struct file_list_node *fnode)
 }
 	
 struct file_list_node *
-get_file_list(char *dir, struct file_list_node *files)
+get_file_list(char *dir, struct file_list_node *files, char *pattern)
 {
 	struct file_list_node *cur_file;
 	struct dirent **dir_list;
@@ -76,7 +98,8 @@ get_file_list(char *dir, struct file_list_node *files)
 	cur_file = files;
 
 	int i = 0;
-	int n = scandir(dir, &dir_list, one, alphasort);
+	gstate.cur_pattern = pattern;
+	int n = scandir(dir, &dir_list, file_filter, alphasort);
 	if (n >= 0 ) {
 		while (i < n) {
 			cur_file->dname_len = dir_str_len;
@@ -84,7 +107,7 @@ get_file_list(char *dir, struct file_list_node *files)
 			if (dir_list[i]->d_type == DT_DIR) {
 				sub_dir_str = malloc((cur_file->dname_len + cur_file->fname_len + 1) * sizeof (char));
 				mempcpy(mempcpy(sub_dir_str, dir_str, dir_str_len), dir_list[i]->d_name, cur_file->fname_len + 1);
-				cur_file = get_file_list(sub_dir_str, cur_file);
+				cur_file = get_file_list(sub_dir_str, cur_file, pattern);
 				free(sub_dir_str);
 			} else {
 				cur_file->lname_len = cur_file->dname_len + cur_file->fname_len;
@@ -93,7 +116,8 @@ get_file_list(char *dir, struct file_list_node *files)
 				memcpy(cur_file->fname, dir_list[i]->d_name, cur_file->fname_len + 1);
 			}
 				i++;
-				if (i < n) {
+				// lname_len test needed if dir_list[i] was a dir with no matching files
+				if ((i < n) && (cur_file->lname_len > 0)) {
 					cur_file->next_file = calloc(1, sizeof (struct file_list_node));
 					cur_file = cur_file->next_file;
 			}

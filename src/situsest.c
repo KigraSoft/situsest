@@ -47,7 +47,7 @@ main(int argc, char *argv[])
 		gstate.silent ? "yes": "no");
 
 	struct file_list_node *files = calloc(1, sizeof (struct file_list_node));
-	get_file_list(gstate.input_dir, files);
+	get_file_list(gstate.input_dir, files, "*.c");
 	diag_print_file_list(files);
 
 	exit(0);

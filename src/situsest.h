@@ -28,6 +28,7 @@ struct gstate {
 	char *input_dir;
 	char *output_dir;
 	char **file_list;
+	char *cur_pattern;
 };
 
 #endif /* not SITUSEST_H */
