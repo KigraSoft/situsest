@@ -33,6 +33,7 @@ static struct gstate gstate = { 0, 0, "./", "./public_www" };
 
 #include "arg-parse.c"
 #include "gen-file-tree.c"
+#include "encdr-html.c"
 
 int
 main(int argc, char *argv[])
@@ -49,6 +50,15 @@ main(int argc, char *argv[])
 	struct file_list_node *files = calloc(1, sizeof (struct file_list_node));
 	get_file_list(gstate.input_dir, files, "*.c");
 	diag_print_file_list(files);
+
+	struct file_list_node *cur_file = files;
+	while (cur_file != NULL) {
+		encode_html(cur_file);
+		cur_file = cur_file->next_file;
+	}
+
+
+	
 
 	exit(0);
 }

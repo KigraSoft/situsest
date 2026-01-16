@@ -1,7 +1,7 @@
 /*
   situsest - The Text File Publisher
 
-  gen-file-tree.c
+  encdr-html.c
   
   Copyright (C) 2026 Stephen R. Kifer
 
@@ -22,8 +22,9 @@
 
 #include "situsest.h"
 #include <string.h>
-#include <fnmatch.h>
+// #include <fnmatch.h>
 
+/*
 struct file_list_node {
 	char   *lname;     // file name with full dir path
 	char   *fname;     // point to file name section
@@ -32,7 +33,16 @@ struct file_list_node {
 	size_t  fname_len; // len of just fname portion of lname
 	struct file_list_node *next_file;
 };
-	
+*/
+
+static int
+encode_html(struct file_list_node *fnode)
+{
+	printf("%s - %s\n", fnode->fname, fnode->lname);
+	//printf("-- %s \n", fnode->lname);
+}
+
+/*
 static int
 one(const struct dirent *entry)
 {
@@ -68,10 +78,9 @@ diag_print_file_list(struct file_list_node *file_list)
 	printf("DIAG:  Print file list\n");
 	while (cur_file != NULL) {
 		// this test is needed if last file in root is a dir with no matching files
-		// may not be needed now with logic in get_file_list
-		//if (cur_file->lname_len > 0) {
+		if (cur_file->lname_len > 0) {
 			printf("%s\n", cur_file->lname);
-			//}
+		}
 		cur_file = cur_file->next_file;
 	
 	}
@@ -88,7 +97,7 @@ print_fnode(char *preface, struct file_list_node *fnode)
 struct file_list_node *
 get_file_list(char *dir, struct file_list_node *files, char *pattern)
 {
-	struct file_list_node *cur_file, *prev_file;
+	struct file_list_node *cur_file;
 	struct dirent **dir_list;
 	size_t dir_entry_len, fname_len;
 	size_t dir_str_len = strlen(dir) + 1;
@@ -97,7 +106,6 @@ get_file_list(char *dir, struct file_list_node *files, char *pattern)
 	mempcpy(mempcpy(dir_str, dir, dir_str_len - 1), "/", sizeof (char));
 
 	cur_file = files;
-	prev_file = NULL;
 
 	int i = 0;
 	gstate.cur_pattern = pattern;
@@ -117,20 +125,16 @@ get_file_list(char *dir, struct file_list_node *files, char *pattern)
 				cur_file->fname = mempcpy(cur_file->lname, dir_str, dir_str_len);
 				memcpy(cur_file->fname, dir_list[i]->d_name, cur_file->fname_len + 1);
 			}
-			i++;
-			// lname_len test needed if dir_list[i] was a dir with no matching files
-			if ((i < n) && (cur_file->lname_len > 0)) {
-				cur_file->next_file = calloc(1, sizeof (struct file_list_node));
-				prev_file = cur_file;
-				cur_file = cur_file->next_file;
+				i++;
+				// lname_len test needed if dir_list[i] was a dir with no matching files
+				if ((i < n) && (cur_file->lname_len > 0)) {
+					cur_file->next_file = calloc(1, sizeof (struct file_list_node));
+					cur_file = cur_file->next_file;
 			}
-		}
-		// needed if last file was DIR or all files were DIR
-		if (prev_file && (cur_file->lname_len == 0)) {
-			prev_file->next_file = NULL;
 		}
 	}
 
 	free(dir_str);
 	return cur_file;
 }
+*/
