@@ -1,0 +1,3 @@
+[submodule "src/ksclib"]
+	path = src/ksclib
+	url = git@github.com:KigraSoft/ksclib.git
