@@ -16,8 +16,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with GNU Emacs.  If not, see
-  <https://www.gnu.org/licenses/>.
+  along with Situsest.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include <config.h>
@@ -31,6 +30,7 @@
 
 static struct gstate gstate = { 0, 0, "./", "./public_www" };
 
+#include "ksclib/ksclib.c"
 #include "arg-parse.c"
 #include "gen-file-tree.c"
 #include "encdr-html.c"
@@ -47,6 +47,7 @@ main(int argc, char *argv[])
 		gstate.verbose ? "yes" : "no",
 		gstate.silent ? "yes": "no");
 
+	// original code
 	struct file_list_node *files = calloc(1, sizeof (struct file_list_node));
 	get_file_list(gstate.input_dir, files, "*.c");
 	diag_print_file_list(files);
@@ -57,8 +58,11 @@ main(int argc, char *argv[])
 		cur_file = cur_file->next_file;
 	}
 
-
-	
+	// begin alternate using ksclib
+	struct kcl_arena *arena = kcl_arn_alloc(STACK, 4048, 4048, true);
+	struct kcl_list *files_2 = kcl_lst_alloc_list(LNKLST, arena, 0);
+	get_file_list_2(gstate.input_dir, files_2, "*.c");
+	diag_print_file_list_2(files_2);
 
 	exit(0);
 }

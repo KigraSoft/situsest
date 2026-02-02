@@ -16,8 +16,7 @@
   General Public License for more details.
 
   You should have received a copy of the GNU General Public License
-  along with GNU Emacs.  If not, see
-  <https://www.gnu.org/licenses/>.
+  along with Situsest.  If not, see <https://www.gnu.org/licenses/>.
 */
 
 #include "situsest.h"
@@ -31,6 +30,14 @@ struct file_list_node {
 	size_t  dname_len; // len of just dir portion of lname
 	size_t  fname_len; // len of just fname portion of lname
 	struct file_list_node *next_file;
+};
+	
+struct file_list_node_2 {
+	char   *lname;     // file name with full dir path
+	char   *fname;     // point to file name section
+	size_t  lname_len; // len of entire full name
+	size_t  dname_len; // len of just dir portion of lname
+	size_t  fname_len; // len of just fname portion of lname
 };
 	
 static int
@@ -133,4 +140,63 @@ get_file_list(char *dir, struct file_list_node *files, char *pattern)
 
 	free(dir_str);
 	return cur_file;
+}
+
+int
+diag_print_file_list_2(struct kcl_list *file_list)
+{
+	struct file_list_node_2 *cur_file = kcl_lst_get_first(file_list);
+	printf("DIAG:  Print file list 2\n");
+	while (cur_file != NULL) {
+		// this test is needed if last file in root is a dir with no matching files
+		// may not be needed now with logic in get_file_list
+		//if (cur_file->lname_len > 0) {
+			printf("%s\n", cur_file->lname);
+			//}
+			//cur_file = cur_file->next_file;
+			cur_file = kcl_lst_get_next(file_list);
+	
+	}
+
+	return 0;
+}
+
+void
+get_file_list_2(char *dir, struct kcl_list *files, char *pattern)
+{
+	struct file_list_node_2 *cur_file, *prev_file;
+	struct dirent **dir_list;
+	size_t dir_entry_len, fname_len;
+	size_t dir_str_len = strlen(dir) + 1;
+	char  *dir_str = malloc(dir_str_len * sizeof (char));
+	char  *sub_dir_str;
+	mempcpy(mempcpy(dir_str, dir, dir_str_len - 1), "/", sizeof (char));
+
+	int i = 0;
+	gstate.cur_pattern = pattern;
+	int n = scandir(dir, &dir_list, file_filter, alphasort);
+	if (n >= 0 ) {
+		while (i < n) {
+			fname_len = strlen(dir_list[i]->d_name);
+			if (dir_list[i]->d_type == DT_DIR) {
+				// should I use an arena for below but maybe not the same as the files list because of different timeline?
+				sub_dir_str = malloc((dir_str_len + fname_len + 1) * sizeof (char));
+				mempcpy(mempcpy(sub_dir_str, dir_str, dir_str_len), dir_list[i]->d_name, fname_len + 1);
+				get_file_list_2(sub_dir_str, files, pattern);
+				free(sub_dir_str);
+			} else {
+				cur_file = kcl_arn_push(files->arena, sizeof (struct file_list_node_2));
+				cur_file->dname_len = dir_str_len;
+				cur_file->fname_len = strlen(dir_list[i]->d_name);
+				cur_file->lname_len = cur_file->dname_len + cur_file->fname_len;
+				cur_file->lname = malloc((cur_file->lname_len + 1) * sizeof (char));
+				cur_file->fname = mempcpy(cur_file->lname, dir_str, dir_str_len);
+				memcpy(cur_file->fname, dir_list[i]->d_name, cur_file->fname_len + 1);
+				kcl_lst_add_datum(files, (void *) cur_file);
+			}
+			i++;
+		}
+	}
+
+	free(dir_str);
 }
