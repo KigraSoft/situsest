@@ -25,16 +25,7 @@
 
 struct file_list_node {
 	char   *lname;     // file name with full dir path
-	char   *fname;     // point to file name section
-	size_t  lname_len; // len of entire full name
-	size_t  dname_len; // len of just dir portion of lname
-	size_t  fname_len; // len of just fname portion of lname
-	struct file_list_node *next_file;
-};
-	
-struct file_list_node_2 {
-	char   *lname;     // file name with full dir path
-	char   *fname;     // point to file name section
+	char   *fname;     // pointer to file name section
 	size_t  lname_len; // len of entire full name
 	size_t  dname_len; // len of just dir portion of lname
 	size_t  fname_len; // len of just fname portion of lname
@@ -68,103 +59,28 @@ file_filter(const struct dirent *entry)
 	}
 }
 
-int
-diag_print_file_list(struct file_list_node *file_list)
-{
-	struct file_list_node *cur_file = file_list;
-	printf("DIAG:  Print file list\n");
-	while (cur_file != NULL) {
-		// this test is needed if last file in root is a dir with no matching files
-		// may not be needed now with logic in get_file_list
-		//if (cur_file->lname_len > 0) {
-			printf("%s\n", cur_file->lname);
-			//}
-		cur_file = cur_file->next_file;
-	
-	}
-
-	return 0;
-}
-
-void
+static void
 print_fnode(char *preface, struct file_list_node *fnode)
 {
 	printf("%s %s \t- %i, %i, %i\n", preface, fnode->lname, fnode->lname_len, fnode->dname_len, fnode->fname_len);
 }
-	
-struct file_list_node *
-get_file_list(char *dir, struct file_list_node *files, char *pattern)
+
+static void
+diag_print_file_list(struct kcl_list *file_list)
 {
-	struct file_list_node *cur_file, *prev_file;
-	struct dirent **dir_list;
-	size_t dir_entry_len, fname_len;
-	size_t dir_str_len = strlen(dir) + 1;
-	char  *dir_str = malloc(dir_str_len * sizeof (char));
-	char  *sub_dir_str;
-	mempcpy(mempcpy(dir_str, dir, dir_str_len - 1), "/", sizeof (char));
-
-	cur_file = files;
-	prev_file = NULL;
-
-	int i = 0;
-	gstate.cur_pattern = pattern;
-	int n = scandir(dir, &dir_list, file_filter, alphasort);
-	if (n >= 0 ) {
-		while (i < n) {
-			cur_file->dname_len = dir_str_len;
-			cur_file->fname_len = strlen(dir_list[i]->d_name);
-			if (dir_list[i]->d_type == DT_DIR) {
-				sub_dir_str = malloc((cur_file->dname_len + cur_file->fname_len + 1) * sizeof (char));
-				mempcpy(mempcpy(sub_dir_str, dir_str, dir_str_len), dir_list[i]->d_name, cur_file->fname_len + 1);
-				cur_file = get_file_list(sub_dir_str, cur_file, pattern);
-				free(sub_dir_str);
-			} else {
-				cur_file->lname_len = cur_file->dname_len + cur_file->fname_len;
-				cur_file->lname = malloc((cur_file->lname_len + 1) * sizeof (char));
-				cur_file->fname = mempcpy(cur_file->lname, dir_str, dir_str_len);
-				memcpy(cur_file->fname, dir_list[i]->d_name, cur_file->fname_len + 1);
-			}
-			i++;
-			// lname_len test needed if dir_list[i] was a dir with no matching files
-			if ((i < n) && (cur_file->lname_len > 0)) {
-				cur_file->next_file = calloc(1, sizeof (struct file_list_node));
-				prev_file = cur_file;
-				cur_file = cur_file->next_file;
-			}
-		}
-		// needed if last file was DIR or all files were DIR
-		if (prev_file && (cur_file->lname_len == 0)) {
-			prev_file->next_file = NULL;
-		}
-	}
-
-	free(dir_str);
-	return cur_file;
-}
-
-int
-diag_print_file_list_2(struct kcl_list *file_list)
-{
-	struct file_list_node_2 *cur_file = kcl_lst_get_first(file_list);
+	struct file_list_node *cur_file = kcl_lst_get_first(file_list);
 	printf("DIAG:  Print file list 2\n");
 	while (cur_file != NULL) {
-		// this test is needed if last file in root is a dir with no matching files
-		// may not be needed now with logic in get_file_list
-		//if (cur_file->lname_len > 0) {
-			printf("%s\n", cur_file->lname);
-			//}
-			//cur_file = cur_file->next_file;
-			cur_file = kcl_lst_get_next(file_list);
+		printf("%s\n", cur_file->lname);
+		cur_file = kcl_lst_get_next(file_list);
 	
 	}
-
-	return 0;
 }
 
-void
-get_file_list_2(char *dir, struct kcl_list *files, char *pattern)
+static void
+get_file_list(char *dir, struct kcl_list *files, char *pattern)
 {
-	struct file_list_node_2 *cur_file, *prev_file;
+	struct file_list_node *file;
 	struct dirent **dir_list;
 	size_t dir_entry_len, fname_len;
 	size_t dir_str_len = strlen(dir) + 1;
@@ -172,29 +88,26 @@ get_file_list_2(char *dir, struct kcl_list *files, char *pattern)
 	char  *sub_dir_str;
 	mempcpy(mempcpy(dir_str, dir, dir_str_len - 1), "/", sizeof (char));
 
-	int i = 0;
 	gstate.cur_pattern = pattern;
 	int n = scandir(dir, &dir_list, file_filter, alphasort);
-	if (n >= 0 ) {
-		while (i < n) {
-			fname_len = strlen(dir_list[i]->d_name);
-			if (dir_list[i]->d_type == DT_DIR) {
-				// should I use an arena for below but maybe not the same as the files list because of different timeline?
-				sub_dir_str = malloc((dir_str_len + fname_len + 1) * sizeof (char));
-				mempcpy(mempcpy(sub_dir_str, dir_str, dir_str_len), dir_list[i]->d_name, fname_len + 1);
-				get_file_list_2(sub_dir_str, files, pattern);
-				free(sub_dir_str);
-			} else {
-				cur_file = kcl_arn_push(files->arena, sizeof (struct file_list_node_2));
-				cur_file->dname_len = dir_str_len;
-				cur_file->fname_len = strlen(dir_list[i]->d_name);
-				cur_file->lname_len = cur_file->dname_len + cur_file->fname_len;
-				cur_file->lname = malloc((cur_file->lname_len + 1) * sizeof (char));
-				cur_file->fname = mempcpy(cur_file->lname, dir_str, dir_str_len);
-				memcpy(cur_file->fname, dir_list[i]->d_name, cur_file->fname_len + 1);
-				kcl_lst_add_datum(files, (void *) cur_file);
-			}
-			i++;
+	for (uint i = 0; i < n; i++) {
+		fname_len = strlen(dir_list[i]->d_name);
+		if (dir_list[i]->d_type == DT_DIR) {
+			// should I use an arena for below but maybe not the same as the files list because of different timeline?
+			sub_dir_str = malloc((dir_str_len + fname_len + 1) * sizeof (char));
+			mempcpy(mempcpy(sub_dir_str, dir_str, dir_str_len), dir_list[i]->d_name, fname_len + 1);
+			get_file_list(sub_dir_str, files, pattern);
+			free(sub_dir_str);
+		} else {
+			file = kcl_arn_push(files->arena, sizeof (struct file_list_node));
+			//file = (struct file_list_node *){ 0 };
+			file->dname_len = dir_str_len;
+			file->fname_len = strlen(dir_list[i]->d_name);
+			file->lname_len = file->dname_len + file->fname_len;
+			file->lname = malloc((file->lname_len + 1) * sizeof (char));
+			file->fname = mempcpy(file->lname, dir_str, dir_str_len);
+			memcpy(file->fname, dir_list[i]->d_name, file->fname_len + 1);
+			kcl_lst_add_datum(files, (void *) file);
 		}
 	}
 

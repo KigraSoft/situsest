@@ -47,22 +47,16 @@ main(int argc, char *argv[])
 		gstate.verbose ? "yes" : "no",
 		gstate.silent ? "yes": "no");
 
-	// original code
-	struct file_list_node *files = calloc(1, sizeof (struct file_list_node));
+	struct kcl_arena *arena = kcl_arn_alloc(STACK, 4048, 4048, true);
+	struct kcl_list *files = kcl_lst_alloc_list(LNKLST, arena, 0);
 	get_file_list(gstate.input_dir, files, "*.c");
 	diag_print_file_list(files);
 
-	struct file_list_node *cur_file = files;
+	struct file_list_node *cur_file = kcl_lst_get_first(files);
 	while (cur_file != NULL) {
 		encode_html(cur_file);
-		cur_file = cur_file->next_file;
+		cur_file = kcl_lst_get_next(files);
 	}
-
-	// begin alternate using ksclib
-	struct kcl_arena *arena = kcl_arn_alloc(STACK, 4048, 4048, true);
-	struct kcl_list *files_2 = kcl_lst_alloc_list(LNKLST, arena, 0);
-	get_file_list_2(gstate.input_dir, files_2, "*.c");
-	diag_print_file_list_2(files_2);
 
 	exit(0);
 }
