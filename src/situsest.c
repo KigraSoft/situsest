@@ -19,6 +19,9 @@
   along with Situsest.  If not, see <https://www.gnu.org/licenses/>.
 */
 
+#define _DEFAULT_SOURCE
+#pragma GCC diagnostic warning "-Wunused-function"
+
 #include <config.h>
 #include <stdlib.h>
 #include <stdio.h>
@@ -49,7 +52,7 @@ main(int argc, char *argv[])
 
 	struct kcl_arena *arena = kcl_arn_alloc(STACK, 4048, 4048, true);
 	struct kcl_list *files = kcl_lst_alloc_list(LNKLST, arena, 0);
-	get_file_list(gstate.input_dir, files, "*.c");
+	get_file_list(gstate.input_dir, files, "*.c", arena);
 	diag_print_file_list(files);
 
 	struct file_list_node *cur_file = kcl_lst_get_first(files);

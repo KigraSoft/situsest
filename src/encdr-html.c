@@ -50,5 +50,9 @@ encode_html(struct file_list_node *fnode)
 	 Opt 1: Gen a list of every file in dest; remove from list as file processed; delete any leftovers
 	 Opt 2: Gen a list of files as processed; use list to parse dest, deleting any not on list
 	 Opt 3: ?
+
+	*/
+
+	return (0);
 }
 
