@@ -19,21 +19,10 @@
   along with Situsest.  If not, see <https://www.gnu.org/licenses/>.
 */
 
-#define _DEFAULT_SOURCE
-#pragma GCC diagnostic warning "-Wunused-function"
-
-#include <config.h>
-#include <stdlib.h>
-#include <stdio.h>
-#include <argp.h>
-#include <sys/types.h>
-#include <dirent.h>
-
 #include "situsest.h"
 
 static struct gstate gstate = { 0, 0, "./", "./public_www" };
 
-#include "ksclib/ksclib.c"
 #include "arg-parse.c"
 #include "gen-file-tree.c"
 #include "encdr-html.c"
@@ -50,9 +39,16 @@ main(int argc, char *argv[])
 		gstate.verbose ? "yes" : "no",
 		gstate.silent ? "yes": "no");
 
+	//regcomp(&gstate.cur_regex, ".*\\.[c|h]$", REG_NOSUB);
+
+	//regex_t regpat = {0};
+	regex_t regpat;
 	struct kcl_arena *arena = kcl_arn_alloc(STACK, 4048, 4048, true);
 	struct kcl_list *files = kcl_lst_alloc_list(LNKLST, arena, 0);
-	get_file_list(gstate.input_dir, files, "*.c", arena);
+	regcomp(&regpat, ".*\\.[c|h]$", REG_NOSUB);
+	get_file_list_regex(gstate.input_dir, files, &regpat, arena);
+
+	//get_file_list(gstate.input_dir, files, ".*\\.[c|h]$", arena);
 	diag_print_file_list(files);
 
 	struct file_list_node *cur_file = kcl_lst_get_first(files);

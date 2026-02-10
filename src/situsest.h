@@ -22,12 +22,36 @@
 #ifndef SITUSEST_H
 #define SITUSEST_H
 
+#define _DEFAULT_SOURCE
+// #define _GNU_SOURCE
+// #pragma GCC diagnostic warning "-Wunused-function"
+
+#include <config.h>
+#include <stdlib.h>
+#include <stdio.h>
+#include <argp.h>
+#include <sys/types.h>
+#include <dirent.h>
+#include <regex.h>
+
+#include "ksclib/ksclib.c"
+
 struct gstate {
 	int silent, verbose;
 	char *input_dir;
 	char *output_dir;
 	char **file_list;
 	char *cur_pattern;
+	regex_t cur_regex;
+	bool dest_sync_del;
+};
+
+struct file_list_node {
+	char   *lname;     // file name with full dir path
+	char   *fname;     // pointer to file name section
+	size_t  lname_len; // len of entire full name
+	size_t  dname_len; // len of just dir portion of lname
+	size_t  fname_len; // len of just fname portion of lname
 };
 
 #endif /* not SITUSEST_H */

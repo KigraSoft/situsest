@@ -24,14 +24,7 @@
 #include <fnmatch.h>
 #include <dirent.h>
 
-struct file_list_node {
-	char   *lname;     // file name with full dir path
-	char   *fname;     // pointer to file name section
-	size_t  lname_len; // len of entire full name
-	size_t  dname_len; // len of just dir portion of lname
-	size_t  fname_len; // len of just fname portion of lname
-};
-	
+[[maybe_unused]]
 static int
 one(const struct dirent *entry)
 {
@@ -51,7 +44,7 @@ file_filter(const struct dirent *entry)
 		if (entry->d_type == DT_DIR) {
 			return 1;
 		} else {
-			if (fnmatch(gstate.cur_pattern, entry->d_name, FNM_PERIOD)) {
+			if (regexec(&gstate.cur_regex, entry->d_name, 0, NULL, 0)) {
 				return 0;
 			} else {
 				return 1;
@@ -60,6 +53,7 @@ file_filter(const struct dirent *entry)
 	}
 }
 
+[[maybe_unused]]
 static void
 print_fnode(char *preface, struct file_list_node *fnode)
 {
@@ -78,6 +72,7 @@ diag_print_file_list(struct kcl_list *file_list)
 	}
 }
 
+[[maybe_unused]]
 static bool
 get_file_list(char *dir, struct kcl_list *files, char *pattern, struct kcl_arena *arena)
 {
@@ -96,7 +91,7 @@ get_file_list(char *dir, struct kcl_list *files, char *pattern, struct kcl_arena
 		dir_str_len++;
 	}
 
-	gstate.cur_pattern = pattern;
+	regcomp(&gstate.cur_regex, pattern, REG_NOSUB);
 	int n = scandir(dir, &dir_list, file_filter, alphasort);
 	for (uint i = 0; i < n; i++) {
 		fname_len = strlen(dir_list[i]->d_name);
@@ -124,3 +119,55 @@ get_file_list(char *dir, struct kcl_list *files, char *pattern, struct kcl_arena
 
 	return (true);
 }
+
+static bool
+get_file_list_regex(char *dir, struct kcl_list *files, regex_t *rfunc, struct kcl_arena *arena)
+{
+	struct file_list_node *file;
+	char  *dir_str;
+	char  *sub_dir_str;
+	size_t fname_len;
+	size_t dir_str_len = strlen(dir);
+	if (dir[dir_str_len - 1] == '/') {
+		dir_str = dir;
+	} else {
+		dir_str = kcl_arn_push(arena, dir_str_len + 2);
+		memcpy(dir_str, dir, dir_str_len);
+		memcpy(dir_str + dir_str_len, "/", 2);
+		dir_str_len++;
+	}
+
+	struct dirent *ep;
+	DIR *dp = opendir(dir);
+	if (dp != NULL) {
+		while ((ep = readdir(dp))) {
+			if (ep->d_name[0] != '.') {
+				fname_len = strlen(ep->d_name);
+				if (ep->d_type == DT_DIR) {
+					sub_dir_str = kcl_arn_push(arena, (dir_str_len + fname_len + 1) * sizeof (char));
+					if (sub_dir_str) {
+						memcpy(sub_dir_str, dir_str, dir_str_len);
+						memcpy(sub_dir_str + dir_str_len, ep->d_name, fname_len + 1);
+						get_file_list_regex(sub_dir_str, files, rfunc, arena);
+					} else { return (false); }
+				} else if (!regexec(rfunc, ep->d_name, 0, NULL, 0)) {
+					file = kcl_arn_push(files->arena, sizeof (struct file_list_node));
+					file->dname_len = dir_str_len;
+					file->fname_len = fname_len;
+					file->lname_len = file->dname_len + file->fname_len;
+					file->lname = kcl_arn_push(files->arena, file->lname_len + 1);
+					if (file->lname) {
+						file->fname = file->lname + dir_str_len;
+						memcpy(file->lname, dir_str, dir_str_len);
+						memcpy(file->fname, ep->d_name, fname_len + 1);
+						kcl_lst_add_datum(files, (void *) file);
+					} else { return (false); }
+				}
+			}
+		}
+		closedir(dp);
+	} else { return (false); }
+
+	return (true);
+}
+
