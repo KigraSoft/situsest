@@ -25,41 +25,13 @@
 #include <dirent.h>
 
 [[maybe_unused]]
-static int
-one(const struct dirent *entry)
-{
-	if (fnmatch("*", entry->d_name, FNM_PERIOD)) {
-		return 0;
-	} else {
-		return 1;
-	}
-}
-
-static int
-file_filter(const struct dirent *entry)
-{
-	if (fnmatch("*", entry->d_name, FNM_PERIOD)) {
-		return 0;
-	} else {
-		if (entry->d_type == DT_DIR) {
-			return 1;
-		} else {
-			if (regexec(&gstate.cur_regex, entry->d_name, 0, NULL, 0)) {
-				return 0;
-			} else {
-				return 1;
-			}
-		}
-	}
-}
-
-[[maybe_unused]]
 static void
-print_fnode(char *preface, struct file_list_node *fnode)
+diag_print_fnode(char *preface, struct file_list_node *fnode)
 {
 	printf("%s %s \t- %li, %li, %li\n", preface, fnode->lname, fnode->lname_len, fnode->dname_len, fnode->fname_len);
 }
 
+[[maybe_unused]]
 static void
 diag_print_file_list(struct kcl_list *file_list)
 {
@@ -72,65 +44,12 @@ diag_print_file_list(struct kcl_list *file_list)
 	}
 }
 
-[[maybe_unused]]
-static bool
-get_file_list(char *dir, struct kcl_list *files, char *pattern, struct kcl_arena *arena)
-{
-	struct file_list_node *file;
-	struct dirent **dir_list;
-	char  *dir_str;
-	char  *sub_dir_str;
-	size_t fname_len;
-	size_t dir_str_len = strlen(dir);
-	if (dir[dir_str_len - 1] == '/') {
-		dir_str = dir;
-	} else {
-		dir_str = kcl_arn_push(arena, dir_str_len + 2);
-		memcpy(dir_str, dir, dir_str_len);
-		memcpy(dir_str + dir_str_len, "/", 2);
-		dir_str_len++;
-	}
-
-	regcomp(&gstate.cur_regex, pattern, REG_NOSUB);
-	int n = scandir(dir, &dir_list, file_filter, alphasort);
-	for (uint i = 0; i < n; i++) {
-		fname_len = strlen(dir_list[i]->d_name);
-		if (dir_list[i]->d_type == DT_DIR) {
-			sub_dir_str = kcl_arn_push(arena, (dir_str_len + fname_len + 1) * sizeof (char));
-			if (sub_dir_str) {
-				memcpy(sub_dir_str, dir_str, dir_str_len);
-				memcpy(sub_dir_str + dir_str_len, dir_list[i]->d_name, fname_len + 1);
-				get_file_list(sub_dir_str, files, pattern, arena);
-			} else { return (false); }
-		} else {
-			file = kcl_arn_push(files->arena, sizeof (struct file_list_node));
-			file->dname_len = dir_str_len;
-			file->fname_len = fname_len;
-			file->lname_len = file->dname_len + file->fname_len;
-			file->lname = kcl_arn_push(files->arena, file->lname_len + 1);
-			if (file->lname) {
-				file->fname = file->lname + dir_str_len;
-				memcpy(file->lname, dir_str, dir_str_len);
-				memcpy(file->fname, dir_list[i]->d_name, fname_len + 1);
-				kcl_lst_add_datum(files, (void *) file);
-			} else { return (false); }
-		}
-	}
-
-	return (true);
-}
-
 static bool
 get_file_list_regex(char *dir, struct kcl_list *files, regex_t *rfunc, struct kcl_arena *arena)
 {
-	struct file_list_node *file;
-	char  *dir_str;
-	char  *sub_dir_str;
-	size_t fname_len;
-	size_t dir_str_len = strlen(dir);
-	if (dir[dir_str_len - 1] == '/') {
-		dir_str = dir;
-	} else {
+	char *dir_str = dir;
+	size_t dir_str_len = strlen(dir_str);
+	if (dir_str[dir_str_len - 1] != '/') {
 		dir_str = kcl_arn_push(arena, dir_str_len + 2);
 		memcpy(dir_str, dir, dir_str_len);
 		memcpy(dir_str + dir_str_len, "/", 2);
@@ -142,16 +61,16 @@ get_file_list_regex(char *dir, struct kcl_list *files, regex_t *rfunc, struct kc
 	if (dp != NULL) {
 		while ((ep = readdir(dp))) {
 			if (ep->d_name[0] != '.') {
-				fname_len = strlen(ep->d_name);
+				size_t fname_len = strlen(ep->d_name);
 				if (ep->d_type == DT_DIR) {
-					sub_dir_str = kcl_arn_push(arena, (dir_str_len + fname_len + 1) * sizeof (char));
+					char *sub_dir_str = kcl_arn_push(arena, (dir_str_len + fname_len + 1) * sizeof (char));
 					if (sub_dir_str) {
 						memcpy(sub_dir_str, dir_str, dir_str_len);
 						memcpy(sub_dir_str + dir_str_len, ep->d_name, fname_len + 1);
 						get_file_list_regex(sub_dir_str, files, rfunc, arena);
 					} else { return (false); }
 				} else if (!regexec(rfunc, ep->d_name, 0, NULL, 0)) {
-					file = kcl_arn_push(files->arena, sizeof (struct file_list_node));
+					struct file_list_node *file = kcl_arn_push(files->arena, sizeof (struct file_list_node));
 					file->dname_len = dir_str_len;
 					file->fname_len = fname_len;
 					file->lname_len = file->dname_len + file->fname_len;
