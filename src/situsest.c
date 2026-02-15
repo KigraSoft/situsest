@@ -35,12 +35,13 @@ main(int argc, char *argv[])
 {
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
-	printf ("INPUT_DIR = %s\nOUTPUT_DIR = %s\n"
-		"VERBOSE = %s\nSILENT = %s\n",
+	printf ("INPUT_DIR \t= %s\nOUTPUT_DIR \t= %s\n"
+		"VERBOSE \t= %s\nSILENT\t\t= %s\nSYNC DEST\t= %s\n",
 		gstate.input_dir,
 		gstate.output_dir,
 		gstate.verbose ? "yes" : "no",
-		gstate.silent ? "yes": "no");
+		gstate.silent ? "yes": "no",
+		gstate.sync_dest ? "yes": "no");
 
 	regex_t regpat;
 	struct kcl_arena *arena = kcl_arn_alloc(STACK, 4048, 4048, true);

@@ -37,13 +37,14 @@
 #include "ksclib/ksclib.c"
 
 struct gstate {
-	int silent, verbose;
 	char *input_dir;
 	char *output_dir;
 	char **file_list;
 	char *cur_pattern;
 	regex_t cur_regex;
-	bool dest_sync_del;
+	bool silent;
+	bool verbose;
+	bool sync_dest;
 };
 
 struct file_list_node {

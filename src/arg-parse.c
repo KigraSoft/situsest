@@ -33,6 +33,7 @@ static struct argp_option options[] = {
 	{"quiet",   'q', 0, 0, "Do not produce any output" },
 	{"silent",  's', 0, OPTION_ALIAS },
 	{"output",  'o', "FILE", 0, "Output to FILE" },
+	{"sync",    'd', 0, 0, "Sync output destination" },
 	{0}
 };
 
@@ -44,13 +45,16 @@ parse_opt(int key, char *arg, struct argp_state *state)
 	switch (key)
 	{
 	case 'q': case 's':
-		gstate.silent = 1;
+		gstate.silent = true;
 		break;
 	case 'v':
-		gstate.verbose = 1;
+		gstate.verbose = true;
 		break;
 	case 'o':
 		gstate.output_dir = arg;
+		break;
+	case 'd':
+		gstate.sync_dest = true;
 		break;
 	case ARGP_KEY_ARG:
 		if (state->arg_num >= 1)
