@@ -51,6 +51,12 @@ main(int argc, char *argv[])
 
 	diag_print_file_list(files);
 
+	struct kcl_list *files2 = kcl_lst_alloc_list(LNKLST, arena, 0);
+	//regcomp(&regpat, ".*\\.[c|h]$", REG_NOSUB);
+	get_file_list_regex_2(gstate.input_dir, files2, &regpat, arena);
+
+	diag_print_file_list_2(files2);
+
 	struct file_list_node *cur_file = kcl_lst_get_first(files);
 	while (cur_file != NULL) {
 		encode_html(cur_file);

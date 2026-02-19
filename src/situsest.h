@@ -55,4 +55,10 @@ struct file_list_node {
 	size_t  fname_len; // len of just fname portion of lname
 };
 
+struct file_list_node2 {
+	kcl_str *lname;
+	kcl_str *dname;
+	kcl_str *fname;
+};
+
 #endif /* not SITUSEST_H */
