@@ -134,10 +134,14 @@ get_file_list_regex_2(char *dir, struct kcl_list *files, regex_t *rfunc, struct 
 					} else { return (false); }
 				} else if (!regexec(rfunc, ep->d_name, 0, NULL, 0)) {
 					struct file_list_node2 *file = kcl_arn_push(files->arena, sizeof (struct file_list_node2));
-					file->lname = kcl_str_concat_new(dir_str, dir_str_len, ep->d_name, fname_len, arena);
-					file->dname = kcl_str_slice_new(file->lname, 0, dir_str_len, arena);
-					file->fname = kcl_str_slice_new(file->lname, dir_str_len, fname_len, arena);
-					kcl_lst_add_datum(files, (void *) file);
+					if (file) {
+						file->lname = kcl_str_concat_new(dir_str, dir_str_len, ep->d_name, fname_len, arena);
+						file->dname = kcl_str_slice_new(file->lname, 0, dir_str_len, arena);
+						file->fname = kcl_str_slice_new(file->lname, dir_str_len, fname_len, arena);
+						if (file->fname) {
+							kcl_lst_add_datum(files, (void *) file);
+						} else { return (false); }
+					} else { return (false); }
 				}
 			}
 		}
