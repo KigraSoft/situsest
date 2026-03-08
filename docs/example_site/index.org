@@ -1,0 +1,10 @@
+#+title:  Site Title
+#+author: Situs Est
+
+* Heading 1
+
+Heading one text.
+
+* Heading 2
+
+Heading two text.

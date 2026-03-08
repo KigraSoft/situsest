@@ -44,7 +44,8 @@ main(int argc, char *argv[])
 		gstate.sync_dest ? "yes": "no");
 
 	regex_t regpat;
-	struct kcl_arena *arena = kcl_arn_alloc(STACK, 4048, 4048, true);
+	struct kcl_arena *arena = nullptr;
+	kcl_arn_alloc(&arena, STACK, 4048, 4048, true);
 	struct kcl_list *files = kcl_lst_alloc_list(LNKLST, arena, 0);
 	regcomp(&regpat, ".*\\.[c|h]$", REG_NOSUB);
 	get_file_list_regex(gstate.input_dir, files, &regpat, arena);
