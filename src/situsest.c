@@ -45,7 +45,7 @@ main(int argc, char *argv[])
 
 	regex_t regpat;
 	struct kcl_arena *arena = nullptr;
-	kcl_arn_alloc(&arena, STACK, 4048, 4048, true);
+	kcl_arn_alloc(&arena, STACKPLUS, 4048, 4048, true);
 	struct kcl_list *files = kcl_lst_alloc_list(LNKLST, arena, 0);
 	regcomp(&regpat, ".*\\.[c|h]$", REG_NOSUB);
 	get_file_list_regex(gstate.input_dir, files, &regpat, arena);
@@ -64,5 +64,6 @@ main(int argc, char *argv[])
 		cur_file = kcl_lst_get_next(files);
 	}
 
+	kcl_arn_mem_display(arena, (uintptr_t)arena, 128);
 	exit(0);
 }
