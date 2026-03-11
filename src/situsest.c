@@ -27,6 +27,7 @@ static struct gstate gstate = {
 };
 
 #include "arg-parse.c"
+#include "config.c"
 #include "gen-file-tree.c"
 #include "encdr-html.c"
 
@@ -46,11 +47,21 @@ main(int argc, char *argv[])
 	regex_t regpat;
 	struct kcl_arena *arena = nullptr;
 	kcl_arn_alloc(&arena, STACKPLUS, 4048, 4048, true);
-	struct kcl_list *files = kcl_lst_alloc_list(LNKLST, arena, 0);
-	regcomp(&regpat, ".*\\.[c|h]$", REG_NOSUB);
-	get_file_list_regex(gstate.input_dir, files, &regpat, arena);
 
-	diag_print_file_list(files);
+	get_site_config(arena);
+
+	printf(">> get_site_config complete\n");
+	
+	//printf(">> %s\n",
+	//kcl_str_cstr_alloc(kcl_lst_get_first(gstate.raw_files)));
+	//printf(">> %s\n",
+	//kcl_str_cstr_alloc(kcl_lst_get_next(gstate.raw_files)));
+
+	//struct kcl_list *files = kcl_lst_alloc_list(LNKLST, arena, 0);
+	regcomp(&regpat, ".*\\.[c|h]$", REG_NOSUB);
+	//get_file_list_regex(gstate.input_dir, files, &regpat, arena);
+
+	//diag_print_file_list(files);
 
 	struct kcl_list *files2 = kcl_lst_alloc_list(LNKLST, arena, 0);
 	//regcomp(&regpat, ".*\\.[c|h]$", REG_NOSUB);
@@ -58,10 +69,10 @@ main(int argc, char *argv[])
 
 	diag_print_file_list_2(files2);
 
-	struct file_list_node *cur_file = kcl_lst_get_first(files);
+	struct file_list_node *cur_file = kcl_lst_get_first(files2);
 	while (cur_file != NULL) {
 		encode_html(cur_file);
-		cur_file = kcl_lst_get_next(files);
+		cur_file = kcl_lst_get_next(files2);
 	}
 
 	kcl_arn_mem_display(arena, (uintptr_t)arena, 128);

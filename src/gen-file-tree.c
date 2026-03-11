@@ -61,6 +61,7 @@ diag_print_file_list_2(struct kcl_list *file_list)
 	}
 }
 
+[[maybe_unused]]
 static bool
 get_file_list_regex(char *dir, struct kcl_list *files, regex_t *rfunc, struct kcl_arena *arena)
 {
