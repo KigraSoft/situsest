@@ -152,3 +152,62 @@ get_file_list_regex_2(char *dir, struct kcl_list *files, regex_t *rfunc, struct 
 	return (true);
 }
 
+static bool
+gen_file_lists_scandir(char* dir, kcl_arena *arena) {
+	char* dir_str = dir;
+	size_t dir_str_len = strlen(dir_str);
+	struct dirent* entry;
+	size_t fname_len;
+	char* sub_dir_str;
+	DIR* dir_list = opendir(dir_str);
+	if (!dir_list) {
+		return (false);
+	} else {
+		while ((entry = readdir(dir_list))) {
+			if (entry->d_name[0] != '.') {
+				fname_len = strlen(entry->d_name);
+				if (entry->d_type == DT_DIR) {
+					sub_dir_str = kcl_arn_push(arena, (dir_str_len + fname_len + 2)); // arena_func
+					if (sub_dir_str) {
+						memcpy(sub_dir_str, dir_str, dir_str_len);
+						memcpy(sub_dir_str + dir_str_len, entry->d_name, fname_len);
+						sub_dir_str[dir_str_len + fname_len] = '/';
+						sub_dir_str[dir_str_len + fname_len + 1] = 0;
+						gen_file_lists_scandir(sub_dir_str, arena);
+					} else { return (false); }
+				} else {
+					struct file_list_node2 *file = kcl_arn_push(gstate.files_all->arena, sizeof (struct file_list_node2));
+					if (file) {
+						file->lname = kcl_str_concat_new(dir_str, dir_str_len, entry->d_name, fname_len, gstate.files_all->arena);
+						file->dname = kcl_str_slice_new(file->lname, 0, dir_str_len, gstate.files_all->arena);
+						file->fname = kcl_str_slice_new(file->lname, dir_str_len, fname_len, gstate.files_all->arena);
+						if (file->fname) {
+							kcl_lst_add_datum(gstate.files_all, (void *)file);
+						} else { return (false); }
+					} else { return (false); }
+				}
+			}
+		}
+		closedir(dir_list);
+	}
+
+	return (true);
+}
+
+static bool
+gen_file_lists(kcl_arena* arena)
+{
+	char* dir_str = gstate.input_dir;
+	size_t dir_str_len = strlen(dir_str);
+	if (dir_str[dir_str_len - 1] != '/') {
+		dir_str = kcl_arn_push(arena, dir_str_len + 2); // could be arena_lcl
+		memcpy(dir_str, gstate.input_dir, dir_str_len);
+		memcpy(dir_str + dir_str_len, "/", 2);
+		dir_str_len++;
+	}
+
+	gen_file_lists_scandir(dir_str, arena);
+
+	return (true);
+}
+									   

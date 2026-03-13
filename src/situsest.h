@@ -45,6 +45,7 @@ struct gstate {
 	bool silent;
 	bool verbose;
 	bool sync_dest;
+	bool diagnostics;
 	struct kcl_list *raw_files;
 	regex_t rgx_raw_files;
 	regex_t rgx_org_files;

@@ -36,13 +36,15 @@ main(int argc, char *argv[])
 {
 	argp_parse(&argp, argc, argv, 0, 0, 0);
 
-	printf ("INPUT_DIR \t= %s\nOUTPUT_DIR \t= %s\n"
-		"VERBOSE \t= %s\nSILENT\t\t= %s\nSYNC DEST\t= %s\n",
-		gstate.input_dir,
-		gstate.output_dir,
-		gstate.verbose ? "yes" : "no",
-		gstate.silent ? "yes": "no",
-		gstate.sync_dest ? "yes": "no");
+	if (gstate.diagnostics) {
+		printf ("INPUT_DIR \t= %s\nOUTPUT_DIR \t= %s\n"
+			"VERBOSE \t= %s\nSILENT\t\t= %s\nSYNC DEST\t= %s\n",
+			gstate.input_dir,
+			gstate.output_dir,
+			gstate.verbose ? "yes" : "no",
+			gstate.silent ? "yes": "no",
+			gstate.sync_dest ? "yes": "no");
+	}
 
 	regex_t regpat;
 	struct kcl_arena *arena = nullptr;
@@ -51,6 +53,8 @@ main(int argc, char *argv[])
 	get_site_config(arena);
 
 	printf(">> get_site_config complete\n");
+
+	gen_file_lists(arena);
 	
 	//printf(">> %s\n",
 	//kcl_str_cstr_alloc(kcl_lst_get_first(gstate.raw_files)));
@@ -76,5 +80,8 @@ main(int argc, char *argv[])
 	}
 
 	kcl_arn_mem_display(arena, (uintptr_t)arena, 128);
-	exit(0);
+
+	kcl_arn_free(arena);
+	
+	exit (EXIT_SUCCESS);
 }

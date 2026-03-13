@@ -54,7 +54,7 @@ get_site_config(kcl_arena* arena)
 		cur_str = kcl_lst_get_next(files_raw);
 	}
 	kcl_str_append_cstr(raw_ext_list, "]$");
-	regcomp(&(gstate.rgx_raw_files), kcl_str_cstr_alloc(raw_ext_list), REG_NOSUB);
+	regcomp(&(gstate.rgx_raw_files), kcl_str_to_cstr_new(raw_ext_list, arena_lcl), REG_NOSUB);
 
 	kcl_str *org_ext_list = kcl_str_new(".*\\.[", 256, arena_lcl);
 	kcl_str_append(org_ext_list, kcl_lst_get_first(files_org));
@@ -65,12 +65,8 @@ get_site_config(kcl_arena* arena)
 		cur_str = kcl_lst_get_next(files_org);
 	}
 	kcl_str_append_cstr(org_ext_list, "]$");
-	regcomp(&(gstate.rgx_org_files), kcl_str_cstr_alloc(org_ext_list), REG_NOSUB);
+	regcomp(&(gstate.rgx_org_files), kcl_str_to_cstr_new(org_ext_list, arena_lcl), REG_NOSUB);
 
-	//printf(">> rgx raw ext: %s\n", kcl_str_cstr_alloc(raw_ext_list));
-	//printf(">> rgx org ext: %s\n", kcl_str_cstr_alloc(org_ext_list));
-	
-	kcl_arn_reset(arena_lcl);
-	free(arena_lcl);  // prob does not free memblock[0]
+	kcl_arn_free(arena_lcl);
 }
 

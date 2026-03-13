@@ -30,6 +30,7 @@ static char args_doc[] = "[SOURCE_DIR]";
 
 static struct argp_option options[] = {
 	{"verbose", 'v', 0, 0, "Produce verbose output" },
+	{"diagstc", 'V', 0, 0, "Print detail diagnostic information" },
 	{"quiet",   'q', 0, 0, "Do not produce any output" },
 	{"silent",  's', 0, OPTION_ALIAS },
 	{"output",  'o', "FILE", 0, "Output to FILE" },
@@ -49,6 +50,9 @@ parse_opt(int key, char *arg, struct argp_state *state)
 		break;
 	case 'v':
 		gstate.verbose = true;
+		break;
+	case 'V':
+		gstate.diagnostics = true;
 		break;
 	case 'o':
 		gstate.output_dir = arg;
