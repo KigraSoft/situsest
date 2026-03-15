@@ -183,6 +183,12 @@ gen_file_lists_scandir(char* dir, kcl_arena *arena) {
 						file->fname = kcl_str_slice_new(file->lname, dir_str_len, fname_len, gstate.files_all->arena);
 						if (file->fname) {
 							kcl_lst_add_datum(gstate.files_all, (void *)file);
+							if (!regexec(&(gstate.rgx_raw_files), entry->d_name, 0, NULL, 0)) {
+								kcl_lst_add_datum(gstate.files_raw, (void *)file);
+							}
+							if (!regexec(&(gstate.rgx_org_files), entry->d_name, 0, NULL, 0)) {
+								kcl_lst_add_datum(gstate.files_org, (void *)file);
+							}
 						} else { return (false); }
 					} else { return (false); }
 				}
@@ -197,6 +203,9 @@ gen_file_lists_scandir(char* dir, kcl_arena *arena) {
 static bool
 gen_file_lists(kcl_arena* arena)
 {
+	gstate.files_all = kcl_lst_alloc_list(LNKLST, arena, 0);
+	gstate.files_raw = kcl_lst_alloc_list(LNKLST, arena, 0);
+	gstate.files_org = kcl_lst_alloc_list(LNKLST, arena, 0);
 	char* dir_str = gstate.input_dir;
 	size_t dir_str_len = strlen(dir_str);
 	if (dir_str[dir_str_len - 1] != '/') {

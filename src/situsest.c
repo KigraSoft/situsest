@@ -55,6 +55,9 @@ main(int argc, char *argv[])
 	printf(">> get_site_config complete\n");
 
 	gen_file_lists(arena);
+	//diag_print_file_list_2(gstate.files_all);
+	diag_print_file_list_2(gstate.files_raw);
+	diag_print_file_list_2(gstate.files_org);
 	
 	//printf(">> %s\n",
 	//kcl_str_cstr_alloc(kcl_lst_get_first(gstate.raw_files)));

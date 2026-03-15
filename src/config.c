@@ -45,7 +45,7 @@ get_site_config(kcl_arena* arena)
 		kcl_lst_add_datum(files_org, (void *)kcl_str_new(org[i], strlen(org[i]), arena_lcl));
 	}
 
-	kcl_str *raw_ext_list = kcl_str_new(".*\\.[", 256, arena_lcl);
+	kcl_str *raw_ext_list = kcl_str_new(".*\\.(", 256, arena_lcl);
 	kcl_str_append(raw_ext_list, kcl_lst_get_first(files_raw));
 	kcl_str *cur_str = kcl_lst_get_next(files_raw);
 	while (cur_str) {
@@ -53,10 +53,10 @@ get_site_config(kcl_arena* arena)
 		kcl_str_append(raw_ext_list, cur_str);
 		cur_str = kcl_lst_get_next(files_raw);
 	}
-	kcl_str_append_cstr(raw_ext_list, "]$");
-	regcomp(&(gstate.rgx_raw_files), kcl_str_to_cstr_new(raw_ext_list, arena_lcl), REG_NOSUB);
+	kcl_str_append_cstr(raw_ext_list, ")$");
+	regcomp(&(gstate.rgx_raw_files), kcl_str_to_cstr_new(raw_ext_list, arena_lcl), REG_NOSUB | REG_EXTENDED);
 
-	kcl_str *org_ext_list = kcl_str_new(".*\\.[", 256, arena_lcl);
+	kcl_str *org_ext_list = kcl_str_new(".*\\.(", 256, arena_lcl);
 	kcl_str_append(org_ext_list, kcl_lst_get_first(files_org));
 	cur_str = kcl_lst_get_next(files_org);
 	while (cur_str) {
@@ -64,8 +64,8 @@ get_site_config(kcl_arena* arena)
 		kcl_str_append(org_ext_list, cur_str);
 		cur_str = kcl_lst_get_next(files_org);
 	}
-	kcl_str_append_cstr(org_ext_list, "]$");
-	regcomp(&(gstate.rgx_org_files), kcl_str_to_cstr_new(org_ext_list, arena_lcl), REG_NOSUB);
+	kcl_str_append_cstr(org_ext_list, ")$");
+	regcomp(&(gstate.rgx_org_files), kcl_str_to_cstr_new(org_ext_list, arena_lcl), REG_NOSUB | REG_EXTENDED);
 
 	kcl_arn_free(arena_lcl);
 }
