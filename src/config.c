@@ -30,8 +30,7 @@ static char org_num = sizeof (org) / sizeof (org[0]);
 void
 get_site_config(kcl_arena* arena)
 {
-	kcl_arena *arena_lcl = nullptr;
-	kcl_arn_alloc(&arena_lcl, STACKPLUS, 4048, 4048, true);
+	kcl_arena *arena_lcl = kcl_arn_alloc(STACKPLUS, 4048, 4048, true);
 	struct kcl_list *files_raw = kcl_lst_alloc_list(LNKLST, arena_lcl, 0);
 	struct kcl_list *files_org = kcl_lst_alloc_list(LNKLST, arena_lcl, 0);
 

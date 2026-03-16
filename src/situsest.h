@@ -55,6 +55,7 @@ struct gstate {
 	struct kcl_list *files_export_dir;
 };
 
+/*
 struct file_list_node {
 	char   *lname;     // file name with full dir path
 	char   *fname;     // pointer to file name section
@@ -62,8 +63,9 @@ struct file_list_node {
 	size_t  dname_len; // len of just dir portion of lname
 	size_t  fname_len; // len of just fname portion of lname
 };
+*/
 
-struct file_list_node2 {
+struct file_list_node {
 	kcl_str *lname;
 	kcl_str *dname;
 	kcl_str *fname;

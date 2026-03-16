@@ -22,10 +22,11 @@
 #include "situsest.h"
 #include <string.h>
 
+[[maybe_unused]]
 static int
 encode_html(struct file_list_node *fnode)
 {
-	printf("%s - %s\n", fnode->fname, fnode->lname);
+	//printf("%s - %s\n", fnode->fname, fnode->lname);
 	//printf("-- %s \n", fnode->lname);
 	/*
 	  algorithm thoughts
