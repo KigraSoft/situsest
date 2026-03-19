@@ -21,7 +21,7 @@
 
 #include "situsest.h"
 
-static char* raw[] = { "html", "js", "css" };
+static char* raw[] = { "html", "js", "css", "png", "jpg", "gif" };
 static char raw_num = sizeof (raw) / sizeof (raw[0]);
 
 static char* org[] = { "org" };

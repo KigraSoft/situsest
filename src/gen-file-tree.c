@@ -100,7 +100,6 @@ static bool
 gen_file_lists(kcl_arena* arena_lnklst)
 {
 	kcl_arena* arena_local = kcl_arn_alloc(STACKPLUS, 4048, 4048, true);
-	printf(">> %p\n", arena_local);
 	
 	gstate.files_all = kcl_lst_alloc_list(LNKLST, arena_lnklst, 0);
 	gstate.files_raw = kcl_lst_alloc_list(LNKLST, arena_lnklst, 0);
