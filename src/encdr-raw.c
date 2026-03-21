@@ -23,6 +23,9 @@
 #include <string.h>
 #include <errno.h>
 
+#include <sys/types.h>
+#include <sys/stat.h>
+
 #define file_buffer_size 1024
 
 void
@@ -30,25 +33,31 @@ copy_file(struct file_list_node* cur_file, kcl_arena* arena)
 {
 	char file_buffer[file_buffer_size];
 	size_t bytes_read = 0;
+	size_t bytes_wrote = 0;
+	size_t bytes_total = 0;
 	
 	kcl_str* output_file_str = kcl_str_new(
 		gstate.output_dir,
 		strlen(gstate.output_dir) + kcl_str_len(cur_file->lname),
 		arena);
 	kcl_str_append(output_file_str, cur_file->ename);
-	if (gstate.verbose) {
-		printf("Copy %s to %s\n",
-		       kcl_str_to_cstr_new(cur_file->lname, arena),
-		       kcl_str_to_cstr_new(output_file_str, arena));
-	}
+	mkdir(kcl_str_to_cstr_new(output_file_str, arena), 0777);
+	kcl_str_append(output_file_str, cur_file->fname);
 
 	FILE * src_file = fopen(kcl_str_to_cstr_new(cur_file->lname, arena), "r");
-	if (src_file) {
+	FILE * new_file = fopen(kcl_str_to_cstr_new(output_file_str, arena), "w");
+	if (src_file && new_file) {
+		if (gstate.verbose) {
+			printf("Copying %s to %s - ",
+			       kcl_str_to_cstr_new(cur_file->lname, arena),
+			       kcl_str_to_cstr_new(output_file_str, arena));
+		}
 		while ((bytes_read = fread(file_buffer, 1, sizeof(file_buffer), src_file))) {
-			printf(">>> file buffer contents:\n");
-			for (unsigned i = 0; i < bytes_read; i++) {
-				putchar((int)file_buffer[i]);
-			}
+			bytes_wrote = fwrite(file_buffer, 1, bytes_read, new_file);
+			bytes_total += bytes_wrote;
+		}
+		if (gstate.verbose) {
+			printf("Wrote %lu bytes\n", bytes_total);
 		}
 	}
 }
