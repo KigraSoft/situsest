@@ -21,10 +21,16 @@
 
 #include "situsest.h"
 #include <string.h>
+#include <errno.h>
+
+#define file_buffer_size 1024
 
 void
 copy_file(struct file_list_node* cur_file, kcl_arena* arena)
 {
+	char file_buffer[file_buffer_size];
+	size_t bytes_read = 0;
+	
 	kcl_str* output_file_str = kcl_str_new(
 		gstate.output_dir,
 		strlen(gstate.output_dir) + kcl_str_len(cur_file->lname),
@@ -34,6 +40,16 @@ copy_file(struct file_list_node* cur_file, kcl_arena* arena)
 		printf("Copy %s to %s\n",
 		       kcl_str_to_cstr_new(cur_file->lname, arena),
 		       kcl_str_to_cstr_new(output_file_str, arena));
+	}
+
+	FILE * src_file = fopen(kcl_str_to_cstr_new(cur_file->lname, arena), "r");
+	if (src_file) {
+		while ((bytes_read = fread(file_buffer, 1, sizeof(file_buffer), src_file))) {
+			printf(">>> file buffer contents:\n");
+			for (unsigned i = 0; i < bytes_read; i++) {
+				putchar((int)file_buffer[i]);
+			}
+		}
 	}
 }
 
