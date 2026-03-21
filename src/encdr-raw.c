@@ -23,10 +23,17 @@
 #include <string.h>
 
 void
-copy_file(struct file_list_node* cur_file, char* dest_dir, kcl_arena* arena)
+copy_file(struct file_list_node* cur_file, kcl_arena* arena)
 {
+	kcl_str* output_file_str = kcl_str_new(
+		gstate.output_dir,
+		strlen(gstate.output_dir) + kcl_str_len(cur_file->lname),
+		arena);
+	kcl_str_append(output_file_str, cur_file->ename);
 	if (gstate.verbose) {
-		printf("Copy %s to %s\n", kcl_str_to_cstr_new(cur_file->lname, arena), dest_dir);
+		printf("Copy %s to %s\n",
+		       kcl_str_to_cstr_new(cur_file->lname, arena),
+		       kcl_str_to_cstr_new(output_file_str, arena));
 	}
 }
 
@@ -37,7 +44,7 @@ encode_raw(struct kcl_list* file_list, char* dest_dir)
 	kcl_arena* arena_local = kcl_arn_alloc(STACKPLUS, 4048, 4048, true);
 	struct file_list_node *cur_file = kcl_lst_get_first(file_list);
 	while (cur_file != NULL) {
-		copy_file(cur_file, dest_dir, arena_local);
+		copy_file(cur_file, arena_local);
 		cur_file = kcl_lst_get_next(file_list);
 	}
 

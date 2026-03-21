@@ -68,6 +68,7 @@ struct file_list_node {
 struct file_list_node {
 	kcl_str *lname;
 	kcl_str *dname;
+	kcl_str *ename;
 	kcl_str *fname;
 };
 

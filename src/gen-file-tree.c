@@ -52,6 +52,7 @@ static bool
 gen_file_lists_scandir(char* dir, kcl_arena *arena_local) {
 	char* dir_str = dir;
 	size_t dir_str_len = strlen(dir_str);
+	size_t export_dir_str_len = strlen(gstate.output_dir); // doing this repeatedly?; should be stashed somewhere?
 	struct dirent* entry;
 	size_t fname_len;
 	char* sub_dir_str;
@@ -76,6 +77,7 @@ gen_file_lists_scandir(char* dir, kcl_arena *arena_local) {
 					if (file) {
 						file->lname = kcl_str_concat_new(dir_str, dir_str_len, entry->d_name, fname_len, gstate.files_all->arena);
 						file->dname = kcl_str_slice_new(file->lname, 0, dir_str_len, gstate.files_all->arena);
+						file->ename = kcl_str_slice_new(file->lname, export_dir_str_len, kcl_str_len(file->lname) - export_dir_str_len, gstate.files_all->arena);
 						file->fname = kcl_str_slice_new(file->lname, dir_str_len, fname_len, gstate.files_all->arena);
 						if (file->fname) {
 							kcl_lst_add_datum(gstate.files_all, (void *)file);
