@@ -31,6 +31,7 @@ static struct gstate gstate = {
 #include "gen-file-tree.c"
 #include "encdr-html.c"
 #include "encdr-raw.c"
+#include "encdr-org.c"
 
 int
 main(int argc, char *argv[])
@@ -58,9 +59,11 @@ main(int argc, char *argv[])
 	if (gstate.diagnostics) {
 		diag_print_file_list(gstate.files_raw, "gstate.files_raw", arena);
 		diag_print_file_list(gstate.files_org, "gstate.files_org", arena);
+		diag_print_file_list(gstate.files_templates, "gstate.files_templates", arena);
 	}
 
-	encode_raw(gstate.files_raw, gstate.output_dir);
+	encode_raw();
+	encode_org();
 	
 	if (gstate.diagnostics) {
 		kcl_arn_mem_display(arena, (uintptr_t)arena, 256);

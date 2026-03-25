@@ -27,10 +27,48 @@ static char raw_num = sizeof (raw) / sizeof (raw[0]);
 static char* org[] = { "org" };
 static char org_num = sizeof (org) / sizeof (org[0]);
 
+static char* template[] = { "seht" };
+static char template_num = sizeof (template) / sizeof (template[0]);
+
+char *
+get_regerror (int errcode, regex_t *compiled)
+{
+	size_t length = regerror (errcode, compiled, NULL, 0);
+	char *buffer = malloc (length);
+	(void) regerror (errcode, compiled, buffer, length);
+	return buffer;
+}
+
+void
+compile_file_ext_rgx(char* array[], char array_size, regex_t* file_ext_rgx, kcl_arena* arena)
+{
+	struct kcl_list *file_list = kcl_lst_alloc_list(LNKLST, arena, 0);
+
+	printf(">> compile file ext rgx\n");
+	
+	for (unsigned char i = 0; i < array_size; i++) {
+		kcl_lst_add_datum(file_list, (void *)kcl_str_new(array[i], strlen(array[i]), arena));
+	}
+
+	kcl_str *file_ext_list = kcl_str_new(".*\\.(", 256, arena);
+	kcl_str_append(file_ext_list, kcl_lst_get_first(file_list));
+	kcl_str *cur_str = kcl_lst_get_next(file_list);
+	while (cur_str) {
+		kcl_str_append_cstr(file_ext_list, "|");
+		kcl_str_append(file_ext_list, cur_str);
+		cur_str = kcl_lst_get_next(file_list);
+	}
+	kcl_str_append_cstr(file_ext_list, ")$");
+	regcomp(file_ext_rgx, kcl_str_to_cstr_new(file_ext_list, arena), REG_NOSUB | REG_EXTENDED);
+}
+
 void
 get_site_config(kcl_arena* arena)
 {
 	kcl_arena *arena_lcl = kcl_arn_alloc(STACKPLUS, 4048, 4048, true);
+
+	compile_file_ext_rgx(template, template_num, &(gstate.rgx_template_files), arena_lcl);
+	
 	struct kcl_list *files_raw = kcl_lst_alloc_list(LNKLST, arena_lcl, 0);
 	struct kcl_list *files_org = kcl_lst_alloc_list(LNKLST, arena_lcl, 0);
 

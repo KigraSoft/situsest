@@ -49,21 +49,13 @@ struct gstate {
 	struct kcl_list *raw_files;
 	regex_t rgx_raw_files;
 	regex_t rgx_org_files;
+	regex_t rgx_template_files;
 	struct kcl_list *files_all;
 	struct kcl_list *files_raw;
 	struct kcl_list *files_org;
+	struct kcl_list *files_templates;
 	struct kcl_list *files_export_dir;
 };
-
-/*
-struct file_list_node {
-	char   *lname;     // file name with full dir path
-	char   *fname;     // pointer to file name section
-	size_t  lname_len; // len of entire full name
-	size_t  dname_len; // len of just dir portion of lname
-	size_t  fname_len; // len of just fname portion of lname
-};
-*/
 
 struct file_list_node {
 	kcl_str *lname;
