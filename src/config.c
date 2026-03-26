@@ -21,6 +21,8 @@
 
 #include "situsest.h"
 
+#define CFG_MAX_RGX_STR_SIZE 1024
+
 static char* raw[] = { "html", "js", "css", "png", "jpg", "gif" };
 static char raw_num = sizeof (raw) / sizeof (raw[0]);
 
@@ -30,27 +32,18 @@ static char org_num = sizeof (org) / sizeof (org[0]);
 static char* template[] = { "seht" };
 static char template_num = sizeof (template) / sizeof (template[0]);
 
-char *
-get_regerror (int errcode, regex_t *compiled)
-{
-	size_t length = regerror (errcode, compiled, NULL, 0);
-	char *buffer = malloc (length);
-	(void) regerror (errcode, compiled, buffer, length);
-	return buffer;
-}
-
-void
+bool
 compile_file_ext_rgx(char* array[], char array_size, regex_t* file_ext_rgx, kcl_arena* arena)
 {
-	struct kcl_list *file_list = kcl_lst_alloc_list(LNKLST, arena, 0);
+	kcl_list *file_list = kcl_lst_alloc_list(LNKLST, arena, 0);
+	if (!file_list) { return false; }
 
-	printf(">> compile file ext rgx\n");
-	
 	for (unsigned char i = 0; i < array_size; i++) {
 		kcl_lst_add_datum(file_list, (void *)kcl_str_new(array[i], strlen(array[i]), arena));
 	}
 
-	kcl_str *file_ext_list = kcl_str_new(".*\\.(", 256, arena);
+	kcl_str *file_ext_list = kcl_str_new(".*\\.(", CFG_MAX_RGX_STR_SIZE, arena);
+	if (!file_ext_list) { return false; }
 	kcl_str_append(file_ext_list, kcl_lst_get_first(file_list));
 	kcl_str *cur_str = kcl_lst_get_next(file_list);
 	while (cur_str) {
@@ -59,51 +52,26 @@ compile_file_ext_rgx(char* array[], char array_size, regex_t* file_ext_rgx, kcl_
 		cur_str = kcl_lst_get_next(file_list);
 	}
 	kcl_str_append_cstr(file_ext_list, ")$");
-	regcomp(file_ext_rgx, kcl_str_to_cstr_new(file_ext_list, arena), REG_NOSUB | REG_EXTENDED);
+	if (regcomp(file_ext_rgx, kcl_str_to_cstr_new(file_ext_list, arena), REG_NOSUB | REG_EXTENDED)) {
+		return false;
+	} else {
+		return true;
+	}
 }
 
-void
+bool
 get_site_config(kcl_arena* arena)
 {
-	kcl_arena *arena_lcl = kcl_arn_alloc(STACKPLUS, 4048, 4048, true);
+	kcl_arena *arena_lcl = kcl_arn_alloc(STACKPLUS, CFG_MAX_RGX_STR_SIZE * 4, CFG_MAX_RGX_STR_SIZE * 4, true);
+	if (!arena_lcl) { return true; }
 
-	compile_file_ext_rgx(template, template_num, &(gstate.rgx_template_files), arena_lcl);
-	
-	struct kcl_list *files_raw = kcl_lst_alloc_list(LNKLST, arena_lcl, 0);
-	struct kcl_list *files_org = kcl_lst_alloc_list(LNKLST, arena_lcl, 0);
-
-	// I am doing some extra steps here becuase because source data will
-	// eventually be read from a config file into kcl_str, etc.
-	for (unsigned i = 0; i < raw_num; i++) {
-		//printf("Raw file import: %s\n", raw[i]);
-		kcl_lst_add_datum(files_raw, (void *)kcl_str_new(raw[i], strlen(raw[i]), arena_lcl));
+	if (compile_file_ext_rgx(raw, raw_num, &(gstate.rgx_raw_files), arena_lcl) &&
+	    compile_file_ext_rgx(org, org_num, &(gstate.rgx_org_files), arena_lcl) &&
+	    compile_file_ext_rgx(template, template_num, &(gstate.rgx_template_files), arena_lcl)) {
+		kcl_arn_free(arena_lcl);
+		return true;
+	} else {
+		return false;
 	}
-	for (unsigned i = 0; i < org_num; i++) {
-		kcl_lst_add_datum(files_org, (void *)kcl_str_new(org[i], strlen(org[i]), arena_lcl));
-	}
-
-	kcl_str *raw_ext_list = kcl_str_new(".*\\.(", 256, arena_lcl);
-	kcl_str_append(raw_ext_list, kcl_lst_get_first(files_raw));
-	kcl_str *cur_str = kcl_lst_get_next(files_raw);
-	while (cur_str) {
-		kcl_str_append_cstr(raw_ext_list, "|");
-		kcl_str_append(raw_ext_list, cur_str);
-		cur_str = kcl_lst_get_next(files_raw);
-	}
-	kcl_str_append_cstr(raw_ext_list, ")$");
-	regcomp(&(gstate.rgx_raw_files), kcl_str_to_cstr_new(raw_ext_list, arena_lcl), REG_NOSUB | REG_EXTENDED);
-
-	kcl_str *org_ext_list = kcl_str_new(".*\\.(", 256, arena_lcl);
-	kcl_str_append(org_ext_list, kcl_lst_get_first(files_org));
-	cur_str = kcl_lst_get_next(files_org);
-	while (cur_str) {
-		kcl_str_append_cstr(org_ext_list, "|");
-		kcl_str_append(org_ext_list, cur_str);
-		cur_str = kcl_lst_get_next(files_org);
-	}
-	kcl_str_append_cstr(org_ext_list, ")$");
-	regcomp(&(gstate.rgx_org_files), kcl_str_to_cstr_new(org_ext_list, arena_lcl), REG_NOSUB | REG_EXTENDED);
-
-	kcl_arn_free(arena_lcl);
 }
 
