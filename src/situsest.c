@@ -62,6 +62,8 @@ main(int argc, char *argv[])
 		diag_print_file_list(gstate.files_templates, "gstate.files_templates", arena);
 	}
 
+	load_templates(arena);
+
 	encode_raw();
 	encode_org();
 	
