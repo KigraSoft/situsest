@@ -32,6 +32,7 @@ static struct gstate gstate = {
 #include "encdr-html.c"
 #include "encdr-raw.c"
 #include "encdr-org.c"
+#include "load-templates.c"
 
 int
 main(int argc, char *argv[])

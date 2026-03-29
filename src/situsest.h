@@ -55,6 +55,7 @@ struct gstate {
 	struct kcl_list *files_org;
 	struct kcl_list *files_templates;
 	struct kcl_list *files_export_dir;
+	kcl_list* templates;
 };
 
 struct file_list_node {

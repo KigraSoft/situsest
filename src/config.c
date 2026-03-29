@@ -44,7 +44,7 @@ compile_file_ext_rgx(char* array[], char array_size, regex_t* file_ext_rgx, kcl_
 
 	kcl_str *file_ext_list = kcl_str_new(".*\\.(", CFG_MAX_RGX_STR_SIZE, arena);
 	if (!file_ext_list) { return false; }
-	kcl_str_append(file_ext_list, kcl_lst_get_first(file_list));
+	kcl_str_append(file_ext_list, (kcl_str*)kcl_lst_get_first(file_list));
 	kcl_str *cur_str = kcl_lst_get_next(file_list);
 	while (cur_str) {
 		kcl_str_append_cstr(file_ext_list, "|");
