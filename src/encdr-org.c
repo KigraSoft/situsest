@@ -44,6 +44,40 @@ encode_org_file(struct file_list_node* cur_file, kcl_arena* arena)
 	printf("Transforming %s to %s\n",
 	       kcl_str_to_cstr_new(cur_file->lname, arena),
 	       kcl_str_to_cstr_new(output_file_str, arena));
+
+	struct stat file_info;
+	unsigned cur_posn = 0;
+	unsigned qry_posn = 0;
+	kcl_str* key_str;
+	kcl_str* val_str;
+	FILE * file_ptr = fopen(kcl_str_to_cstr_new(cur_file->lname, arena), "r");
+	if (file_ptr) {
+		fstat(fileno(file_ptr), &file_info);
+		kcl_str* file_str = kcl_str_new("", file_info.st_size, arena);
+		fread(file_str->str, 1, file_info.st_size, file_ptr);
+		file_str->len = file_info.st_size;
+		while (cur_posn < file_str->len) {
+			if ((file_str->str[cur_posn] == '#') &&
+			    (file_str->str[cur_posn + 1] == '+')) {
+				cur_posn += 2;
+				if (kcl_str_find(file_str, cur_posn, ':', &qry_posn)) {
+					key_str = kcl_str_slice_new(file_str, cur_posn, qry_posn - cur_posn, arena);
+					cur_posn = qry_posn + 1;
+					kcl_str_find(file_str, cur_posn, '\n', &qry_posn);
+					val_str = kcl_str_slice_new(file_str, cur_posn, qry_posn - cur_posn, arena);
+					kcl_str_trim(val_str);
+					printf("Key/Value Found:\n  Key: %s\n  Val: %s\n",
+					       kcl_str_to_cstr_new(key_str, arena),
+					       kcl_str_to_cstr_new(val_str, arena));
+				}
+			}
+			if (kcl_str_find(file_str, cur_posn, '\n', &qry_posn)) {
+				cur_posn = qry_posn + 1;
+			} else {
+				cur_posn = file_str->len;
+			}
+		}
+	}
 }
 	       
 void

@@ -35,7 +35,6 @@ load_template(struct template_struct* template, kcl_arena* arena_lcl)
 	unsigned cur_posn = 0;
 	unsigned qry_posn;
 	kcl_str* tmp_str;
-	//unsigned file_size;
 	FILE * template_file = fopen(kcl_str_to_cstr_new(template->file->lname, arena_lcl), "r");
 	if (template_file) {
 		fstat(fileno(template_file), &file_info);
