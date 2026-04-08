@@ -26,6 +26,40 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+kcl_list*
+parse_file_vars(kcl_str* file_str, kcl_arena* arena)
+{
+	unsigned cur_posn = 0;
+	unsigned qry_posn = 0;
+	kcl_str* key_str;
+	kcl_str* val_str;
+	kcl_list* file_vars = kcl_lst_alloc_list(KV_STR, arena, 0);
+	while (cur_posn < file_str->len) {
+		if ((file_str->str[cur_posn] == '#') &&
+		    (file_str->str[cur_posn + 1] == '+')) {
+			cur_posn += 2;
+			if (kcl_str_find(file_str, cur_posn, ':', &qry_posn)) {
+				key_str = kcl_str_slice_new(file_str, cur_posn, qry_posn - cur_posn, arena);
+				kcl_str_trim(key_str);
+				cur_posn = qry_posn + 1;
+				kcl_str_find(file_str, cur_posn, '\n', &qry_posn);
+				val_str = kcl_str_slice_new(file_str, cur_posn, qry_posn - cur_posn, arena);
+				kcl_str_trim(val_str);
+				kcl_lst_add_datum_w_key(file_vars, val_str, key_str);
+				printf("Key/Value Found:\n  Key: %s\n  Val: %s\n",
+				       kcl_str_to_cstr_new(key_str, arena),
+				       kcl_str_to_cstr_new(val_str, arena));
+			}
+		}
+		if (kcl_str_find(file_str, cur_posn, '\n', &qry_posn)) {
+			cur_posn = qry_posn + 1;
+		} else {
+			cur_posn = file_str->len;
+		}
+	}
+	return file_vars;
+}
+
 void
 encode_org_file(struct file_list_node* cur_file, kcl_arena* arena)
 {
@@ -46,36 +80,20 @@ encode_org_file(struct file_list_node* cur_file, kcl_arena* arena)
 	       kcl_str_to_cstr_new(output_file_str, arena));
 
 	struct stat file_info;
-	unsigned cur_posn = 0;
-	unsigned qry_posn = 0;
-	kcl_str* key_str;
-	kcl_str* val_str;
 	FILE * file_ptr = fopen(kcl_str_to_cstr_new(cur_file->lname, arena), "r");
 	if (file_ptr) {
 		fstat(fileno(file_ptr), &file_info);
 		kcl_str* file_str = kcl_str_new("", file_info.st_size, arena);
 		fread(file_str->str, 1, file_info.st_size, file_ptr);
 		file_str->len = file_info.st_size;
-		while (cur_posn < file_str->len) {
-			if ((file_str->str[cur_posn] == '#') &&
-			    (file_str->str[cur_posn + 1] == '+')) {
-				cur_posn += 2;
-				if (kcl_str_find(file_str, cur_posn, ':', &qry_posn)) {
-					key_str = kcl_str_slice_new(file_str, cur_posn, qry_posn - cur_posn, arena);
-					cur_posn = qry_posn + 1;
-					kcl_str_find(file_str, cur_posn, '\n', &qry_posn);
-					val_str = kcl_str_slice_new(file_str, cur_posn, qry_posn - cur_posn, arena);
-					kcl_str_trim(val_str);
-					printf("Key/Value Found:\n  Key: %s\n  Val: %s\n",
-					       kcl_str_to_cstr_new(key_str, arena),
-					       kcl_str_to_cstr_new(val_str, arena));
-				}
-			}
-			if (kcl_str_find(file_str, cur_posn, '\n', &qry_posn)) {
-				cur_posn = qry_posn + 1;
-			} else {
-				cur_posn = file_str->len;
-			}
+		kcl_list* file_vars = parse_file_vars(file_str, arena);
+		kcl_str* tmp = kcl_lst_get_first(file_vars);
+		kcl_str* key = kcl_lst_get_cur_key(file_vars);
+		printf("File variables in %s:\n", kcl_str_to_cstr_new(cur_file->lname, arena));
+		while (tmp) {
+			printf("  %s \t: %s\n", kcl_str_to_cstr_new(key, arena), kcl_str_to_cstr_new(tmp, arena));
+			tmp = kcl_lst_get_next(file_vars);
+			key = kcl_lst_get_cur_key(file_vars);
 		}
 	}
 }
