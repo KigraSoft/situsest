@@ -46,9 +46,6 @@ parse_file_vars(kcl_str* file_str, kcl_arena* arena)
 				val_str = kcl_str_slice_new(file_str, cur_posn, qry_posn - cur_posn, arena);
 				kcl_str_trim(val_str);
 				kcl_lst_add_datum_w_key(file_vars, val_str, key_str);
-				printf("Key/Value Found:\n  Key: %s\n  Val: %s\n",
-				       kcl_str_to_cstr_new(key_str, arena),
-				       kcl_str_to_cstr_new(val_str, arena));
 			}
 		}
 		if (kcl_str_find(file_str, cur_posn, '\n', &qry_posn)) {
@@ -58,6 +55,34 @@ parse_file_vars(kcl_str* file_str, kcl_arena* arena)
 		}
 	}
 	return file_vars;
+}
+
+void
+write_org_file_w_template(kcl_str* file_str, struct template_struct* template, kcl_str* output_file_str, FILE* file_ptr, kcl_list* file_vars, kcl_arena* arena)
+{
+	kcl_str key_str;
+	kcl_str* val_str;
+	FILE* output_file_ptr = fopen(kcl_str_to_cstr_new(output_file_str, arena), "w");
+	if (output_file_ptr) {
+		kcl_str* template_str = kcl_lst_get_first(template->template_tree);
+		while (template_str) {
+			switch (template_str->str[0]) {
+			case '%':
+				kcl_str_slice(&key_str, template_str, 1, template_str->len - 1);
+				val_str = kcl_lst_get_val(file_vars, &key_str);
+				kcl_str_fputs(val_str, stdout);
+				break;
+			case '#':
+				//output org file
+				printf("%s", kcl_str_to_cstr_new(template_str, arena));
+				break;
+			default:
+				//output template str
+				kcl_str_fputs(template_str, stdout);
+			}
+			template_str = kcl_lst_get_next(template->template_tree);
+		}
+	}
 }
 
 void
@@ -95,6 +120,9 @@ encode_org_file(struct file_list_node* cur_file, kcl_arena* arena)
 			tmp = kcl_lst_get_next(file_vars);
 			key = kcl_lst_get_cur_key(file_vars);
 		}
+		kcl_str* tmp_key = kcl_str_new("_default.seht", 15,  arena);
+		struct template_struct* template = kcl_lst_get_val(gstate.templates, tmp_key);
+		write_org_file_w_template(file_str, template, output_file_str, file_ptr, file_vars, arena);
 	}
 }
 	       

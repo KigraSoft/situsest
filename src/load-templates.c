@@ -20,13 +20,13 @@
 */
 
 #include "situsest.h"
-
+/*
 struct template_struct {
 	struct file_list_node*	file;
 	kcl_str*                template_str;
 	kcl_list*		template_tree;
 };
-
+*/
 bool
 //load_template(struct file_list_node* cur_file, kcl_arena* arena)
 load_template(struct template_struct* template, kcl_arena* arena_lcl)
@@ -79,7 +79,7 @@ load_template(struct template_struct* template, kcl_arena* arena_lcl)
 bool
 load_templates(kcl_arena* arena)
 {
-	gstate.templates = kcl_lst_alloc_list(LNKLST, arena, 0);
+	gstate.templates = kcl_lst_alloc_list(KV_STR, arena, 0);
 	if (!gstate.templates) { return false; }
 
 	struct template_struct* template;
@@ -89,7 +89,7 @@ load_templates(kcl_arena* arena)
 		template->file = cur_file;
 		template->template_tree = kcl_lst_alloc_list(LNKLST, arena, 0);
 		load_template(template, arena);
-		kcl_lst_add_datum(gstate.templates, template);
+		kcl_lst_add_datum_w_key(gstate.templates, template, cur_file->fname);
 		cur_file = kcl_lst_get_next(gstate.files_templates);
 	}
 

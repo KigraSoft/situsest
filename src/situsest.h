@@ -65,4 +65,10 @@ struct file_list_node {
 	kcl_str *fname;
 };
 
+struct template_struct {
+	struct file_list_node*	file;
+	kcl_str*                template_str;
+	kcl_list*		template_tree;
+};
+
 #endif /* not SITUSEST_H */
