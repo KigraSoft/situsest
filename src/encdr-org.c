@@ -58,6 +58,50 @@ parse_file_vars(kcl_str* file_str, kcl_arena* arena)
 }
 
 void
+transform_org_file(kcl_str* file_str, kcl_arena* arena)
+{
+	unsigned cur_posn = 0;
+	unsigned qry_posn = 0;
+	//unsigned hdg_level = 0;
+	unsigned i;
+	kcl_str cur_line_str;
+	kcl_str cur_text_str;
+	while (cur_posn < file_str->len) {
+		if (kcl_str_find(file_str, cur_posn, '\n', &qry_posn)) {
+			kcl_str_slice(&cur_line_str, file_str, cur_posn, qry_posn - cur_posn);
+		} else {
+			kcl_str_slice(&cur_line_str, file_str, cur_posn, file_str->len - cur_posn);
+		}
+		switch (cur_line_str.str[0]) {
+		case '#':
+			break;
+		case '*':
+			// write heading code
+			i = 0;
+			while (cur_line_str.str[i] != ' ') { i++; }
+			fputs("<h", stdout);
+			fputc(i + 49, stdout);
+			fputc('>', stdout);
+			kcl_str_slice(&cur_text_str, &cur_line_str, i, cur_line_str.len - i);
+			kcl_str_trim(&cur_text_str);
+			kcl_str_fputs(&cur_text_str, stdout);
+			fputs("</h", stdout);
+			fputc(i + 49, stdout);
+			fputc('>', stdout);
+			fputc('\n', stdout);
+			break;
+		case ' ':
+			// check for blank line or deal with indentation
+			break;
+		default:
+			// output text
+			break;
+		}
+		cur_posn = qry_posn + 1;
+	}
+}
+
+void
 write_org_file_w_template(kcl_str* file_str, struct template_struct* template, kcl_str* output_file_str, FILE* file_ptr, kcl_list* file_vars, kcl_arena* arena)
 {
 	kcl_str key_str;
@@ -74,7 +118,8 @@ write_org_file_w_template(kcl_str* file_str, struct template_struct* template, k
 				break;
 			case '#':
 				//output org file
-				printf("%s", kcl_str_to_cstr_new(template_str, arena));
+				//printf("%s", kcl_str_to_cstr_new(template_str, arena));
+				transform_org_file(file_str, arena);
 				break;
 			default:
 				//output template str
