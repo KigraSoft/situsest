@@ -62,8 +62,9 @@ transform_org_file(kcl_str* file_str, kcl_arena* arena)
 {
 	unsigned cur_posn = 0;
 	unsigned qry_posn = 0;
-	//unsigned hdg_level = 0;
 	unsigned i;
+	bool prev_line_blank = false;
+	bool state_in_para = false;
 	kcl_str cur_line_str;
 	kcl_str cur_text_str;
 	while (cur_posn < file_str->len) {
@@ -89,15 +90,29 @@ transform_org_file(kcl_str* file_str, kcl_arena* arena)
 			fputc(i + 49, stdout);
 			fputc('>', stdout);
 			fputc('\n', stdout);
+			prev_line_blank = true;
 			break;
-		case ' ':
-			// check for blank line or deal with indentation
+		case '\n':
+			if (state_in_para) {
+				fputs("</p>\n", stdout);
+			}
+			prev_line_blank = true;
+			state_in_para = false;
 			break;
 		default:
-			// output text
+			if (prev_line_blank) {
+				fputs("<p>", stdout);
+			}
+			kcl_str_trim(&cur_line_str);
+			kcl_str_fputs(&cur_line_str, stdout);
+			prev_line_blank = false;
+			state_in_para = true;
 			break;
 		}
 		cur_posn = qry_posn + 1;
+	}
+	if (state_in_para) {
+		fputs("</p>", stdout);
 	}
 }
 
