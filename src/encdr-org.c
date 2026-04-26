@@ -26,6 +26,29 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+void
+parse_org_file(kcl_str* file_str, kcl_arena* arena)
+{
+	//unsigned cur_posn = 0;
+	//unsigned qry_posn = 0;
+	//unsigned fstr_len = kcl_str_len(file_str);
+
+	kcl_list* lines = kcl_str_get_lines(file_str, arena);
+
+	kcl_str* line = kcl_lst_get_first(lines);
+	while (line) {
+		fputc('>', stdout);
+		kcl_str_fputs(line, stdout);
+		fputc('\n', stdout);
+		line = kcl_lst_get_next(lines);
+	}
+
+	/*
+	while (cur_posn < fstr_len) {
+	}
+	*/
+}
+
 kcl_list*
 parse_file_vars(kcl_str* file_str, kcl_arena* arena)
 {
@@ -183,6 +206,7 @@ encode_org_file(struct file_list_node* cur_file, kcl_arena* arena)
 		kcl_str* tmp_key = kcl_str_new("_default.seht", 15,  arena);
 		struct template_struct* template = kcl_lst_get_val(gstate.templates, tmp_key);
 		write_org_file_w_template(file_str, template, output_file_str, file_ptr, file_vars, arena);
+		parse_org_file(file_str, arena);
 	}
 }
 	       
