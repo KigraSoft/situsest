@@ -59,10 +59,11 @@ struct gstate {
 };
 
 struct file_list_node {
-	kcl_str *lname;
-	kcl_str *dname;
-	kcl_str *ename;
-	kcl_str *fname;
+	kcl_str * src_path;
+	kcl_str * src_dir;
+	kcl_str * src_sub_dir;
+	kcl_str * file_name;
+	kcl_str * output_file_str;
 };
 
 struct template_struct {

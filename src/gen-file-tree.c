@@ -38,10 +38,11 @@ diag_print_file_list(struct kcl_list *file_list, char* title_str, kcl_arena* are
 	struct file_list_node *cur_file = kcl_lst_get_first(file_list);
 	printf("DIAG:  Print file list for: %s\n", title_str);
 	while (cur_file != NULL) {
-		printf("%s : %s - %s\n",
-		       kcl_str_to_cstr_new(cur_file->lname, arena),
-		       kcl_str_to_cstr_new(cur_file->dname, arena),
-		       kcl_str_to_cstr_new(cur_file->fname, arena)
+		printf("%s : %s - %s - %s\n",
+		       kcl_str_to_cstr_new(cur_file->src_path, arena),
+		       kcl_str_to_cstr_new(cur_file->src_sub_dir, arena),
+		       kcl_str_to_cstr_new(cur_file->file_name, arena),
+		       kcl_str_to_cstr_new(cur_file->output_file_str, arena)
 			);
 		cur_file = kcl_lst_get_next(file_list);
 	
@@ -50,41 +51,51 @@ diag_print_file_list(struct kcl_list *file_list, char* title_str, kcl_arena* are
 
 static bool
 gen_file_lists_scandir(char* dir, kcl_arena *arena_local) {
-	char* dir_str = dir;
-	size_t dir_str_len = strlen(dir_str);
-	size_t export_dir_str_len = strlen(gstate.output_dir); // doing this repeatedly?; should be stashed somewhere?
+	char* src_dir_str = dir;
+	size_t src_dir_str_len = strlen(src_dir_str);
+	size_t input_dir_str_len = strlen(gstate.input_dir);
+	//size_t export_dir_str_len = strlen(gstate.output_dir); // doing this repeatedly?; should be stashed somewhere?
 	struct dirent* entry;
-	size_t fname_len;
+	size_t file_name_len;
 	char* sub_dir_str;
-	DIR* dir_list = opendir(dir_str);
+	DIR* dir_list = opendir(src_dir_str);
 	if (!dir_list) {
 		return (false);
 	} else {
 		while ((entry = readdir(dir_list))) {
 			if (entry->d_name[0] != '.') {
-				fname_len = strlen(entry->d_name);
+				file_name_len = strlen(entry->d_name);
 				if (entry->d_type == DT_DIR) {
-					sub_dir_str = kcl_arn_push(arena_local, (dir_str_len + fname_len + 2)); // arena_func
+					sub_dir_str = kcl_arn_push(arena_local, (src_dir_str_len + file_name_len + 2)); // arena_func
 					if (sub_dir_str) {
-						memcpy(sub_dir_str, dir_str, dir_str_len);
-						memcpy(sub_dir_str + dir_str_len, entry->d_name, fname_len);
-						sub_dir_str[dir_str_len + fname_len] = '/';
-						sub_dir_str[dir_str_len + fname_len + 1] = 0;
+						memcpy(sub_dir_str, src_dir_str, src_dir_str_len);
+						memcpy(sub_dir_str + src_dir_str_len, entry->d_name, file_name_len);
+						sub_dir_str[src_dir_str_len + file_name_len] = '/';
+						sub_dir_str[src_dir_str_len + file_name_len + 1] = 0;
 						gen_file_lists_scandir(sub_dir_str, arena_local);
 					} else { return (false); }
 				} else {
 					struct file_list_node *file = kcl_arn_push(gstate.files_all->arena, sizeof (struct file_list_node));
 					if (file) {
-						file->lname = kcl_str_concat_new(dir_str, dir_str_len, entry->d_name, fname_len, gstate.files_all->arena);
-						file->dname = kcl_str_slice_new(file->lname, 0, dir_str_len, gstate.files_all->arena);
-						file->ename = kcl_str_slice_new(file->lname, export_dir_str_len, kcl_str_len(file->dname) - export_dir_str_len, gstate.files_all->arena);
-						file->fname = kcl_str_slice_new(file->lname, dir_str_len, fname_len, gstate.files_all->arena);
-						if (file->fname) {
+						file->src_path = kcl_str_concat_new(src_dir_str, src_dir_str_len, entry->d_name, file_name_len, gstate.files_all->arena);
+						file->src_dir = kcl_str_slice_new(file->src_path, 0, src_dir_str_len, gstate.files_all->arena);
+						file->src_sub_dir = kcl_str_slice_new(file->src_path, input_dir_str_len, kcl_str_len(file->src_dir) - input_dir_str_len, gstate.files_all->arena);
+						file->file_name = kcl_str_slice_new(file->src_path, src_dir_str_len, file_name_len, gstate.files_all->arena);
+						file->output_file_str = kcl_str_new(gstate.output_dir, strlen(gstate.output_dir) + kcl_str_len(file->src_path), gstate.files_all->arena);
+						kcl_str_append(file->output_file_str, "/");
+						kcl_str_append(file->output_file_str, file->src_sub_dir);
+						kcl_str_append(file->output_file_str, file->file_name);
+						if (file->file_name) {
 							kcl_lst_add_datum(gstate.files_all, (void *)file);
 							if (!regexec(&(gstate.rgx_raw_files), entry->d_name, 0, NULL, 0)) {
 								kcl_lst_add_datum(gstate.files_raw, (void *)file);
 							}
 							if (!regexec(&(gstate.rgx_org_files), entry->d_name, 0, NULL, 0)) {
+								file->output_file_str->str[file->output_file_str->len - 3] = 'h';
+								file->output_file_str->str[file->output_file_str->len - 2] = 't';
+								file->output_file_str->str[file->output_file_str->len - 1] = 'm';
+								file->output_file_str->str[file->output_file_str->len - 0] = 'l';
+								file->output_file_str->len++;
 								kcl_lst_add_datum(gstate.files_org, (void *)file);
 							}
 							if (!regexec(&(gstate.rgx_template_files), entry->d_name, 0, NULL, 0)) {
@@ -111,16 +122,16 @@ gen_file_lists(kcl_arena* arena_lnklst)
 	gstate.files_org = kcl_lst_alloc_list(LNKLST, arena_lnklst, 0);
 	gstate.files_templates = kcl_lst_alloc_list(LNKLST, arena_lnklst, 0);
 
-	char* dir_str = gstate.input_dir;
-	size_t dir_str_len = strlen(dir_str);
-	if (dir_str[dir_str_len - 1] != '/') {
-		dir_str = kcl_arn_push(arena_local, dir_str_len + 2); // could be arena_lcl
-		memcpy(dir_str, gstate.input_dir, dir_str_len);
-		memcpy(dir_str + dir_str_len, "/", 2);
-		dir_str_len++;
+	char* src_dir_str = gstate.input_dir;
+	size_t src_dir_str_len = strlen(src_dir_str);
+	if (src_dir_str[src_dir_str_len - 1] != '/') {
+		src_dir_str = kcl_arn_push(arena_local, src_dir_str_len + 2); // could be arena_lcl
+		memcpy(src_dir_str, gstate.input_dir, src_dir_str_len);
+		memcpy(src_dir_str + src_dir_str_len, "/", 2);
+		src_dir_str_len++;
 	}
 
-	gen_file_lists_scandir(dir_str, arena_local);
+	gen_file_lists_scandir(src_dir_str, arena_local);
 
 	if (gstate.diagnostics) {
 		kcl_arn_mem_display(arena_local, (uintptr_t)arena_local, 128);

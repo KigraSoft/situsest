@@ -171,24 +171,26 @@ write_org_file_w_template(kcl_str* file_str, struct template_struct* template, k
 void
 encode_org_file(struct file_list_node* cur_file, kcl_arena* arena)
 {
+	kcl_str* output_file_str = cur_file->output_file_str;
+	/*
 	kcl_str* output_file_str = kcl_str_new(
 		gstate.output_dir,
-		strlen(gstate.output_dir) + kcl_str_len(cur_file->lname),
+		strlen(gstate.output_dir) + kcl_str_len(cur_file->src_path),
 		arena);
-	kcl_str_append(output_file_str, cur_file->ename);
-	kcl_str_append(output_file_str, cur_file->fname);
+	kcl_str_append(output_file_str, cur_file->src_sub_dir);
+	kcl_str_append(output_file_str, cur_file->file_name);
 	output_file_str->str[output_file_str->len - 3] = 'h';
 	output_file_str->str[output_file_str->len - 2] = 't';
 	output_file_str->str[output_file_str->len - 1] = 'm';
 	output_file_str->str[output_file_str->len - 0] = 'l';
 	output_file_str->len++;
-	
+	*/
 	printf("Transforming %s to %s\n",
-	       kcl_str_to_cstr_new(cur_file->lname, arena),
+	       kcl_str_to_cstr_new(cur_file->src_path, arena),
 	       kcl_str_to_cstr_new(output_file_str, arena));
 
 	struct stat file_info;
-	FILE * file_ptr = fopen(kcl_str_to_cstr_new(cur_file->lname, arena), "r");
+	FILE * file_ptr = fopen(kcl_str_to_cstr_new(cur_file->src_path, arena), "r");
 	if (file_ptr) {
 		fstat(fileno(file_ptr), &file_info);
 		kcl_str* file_str = kcl_str_new("", file_info.st_size, arena);
@@ -197,7 +199,7 @@ encode_org_file(struct file_list_node* cur_file, kcl_arena* arena)
 		kcl_list* file_vars = parse_file_vars(file_str, arena);
 		kcl_str* tmp = kcl_lst_get_first(file_vars);
 		kcl_str* key = kcl_lst_get_cur_key(file_vars);
-		printf("File variables in %s:\n", kcl_str_to_cstr_new(cur_file->lname, arena));
+		printf("File variables in %s:\n", kcl_str_to_cstr_new(cur_file->src_path, arena));
 		while (tmp) {
 			printf("  %s \t: %s\n", kcl_str_to_cstr_new(key, arena), kcl_str_to_cstr_new(tmp, arena));
 			tmp = kcl_lst_get_next(file_vars);

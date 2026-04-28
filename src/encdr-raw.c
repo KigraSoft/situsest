@@ -35,21 +35,23 @@ copy_file(struct file_list_node* cur_file, kcl_arena* arena)
 	size_t bytes_read = 0;
 	size_t bytes_wrote = 0;
 	size_t bytes_total = 0;
-	
+
+	//kcl_str* output_file_str = cur_file->output_file_str;
+	//need to handle mkdir below before switching to the stored output_file_str
 	kcl_str* output_file_str = kcl_str_new(
 		gstate.output_dir,
-		strlen(gstate.output_dir) + kcl_str_len(cur_file->lname),
+		strlen(gstate.output_dir) + kcl_str_len(cur_file->src_path),
 		arena);
-	kcl_str_append(output_file_str, cur_file->ename);
+	kcl_str_append(output_file_str, cur_file->src_sub_dir);
 	mkdir(kcl_str_to_cstr_new(output_file_str, arena), 0777);
-	kcl_str_append(output_file_str, cur_file->fname);
+	kcl_str_append(output_file_str, cur_file->file_name);
 
-	FILE * src_file = fopen(kcl_str_to_cstr_new(cur_file->lname, arena), "r");
+	FILE * src_file = fopen(kcl_str_to_cstr_new(cur_file->src_path, arena), "r");
 	FILE * new_file = fopen(kcl_str_to_cstr_new(output_file_str, arena), "w");
 	if (src_file && new_file) {
 		if (gstate.verbose) {
 			printf("Copying %s to %s - ",
-			       kcl_str_to_cstr_new(cur_file->lname, arena),
+			       kcl_str_to_cstr_new(cur_file->src_path, arena),
 			       kcl_str_to_cstr_new(output_file_str, arena));
 		}
 		while ((bytes_read = fread(file_buffer, 1, sizeof(file_buffer), src_file))) {

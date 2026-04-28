@@ -35,7 +35,7 @@ load_template(struct template_struct* template, kcl_arena* arena_lcl)
 	unsigned cur_posn = 0;
 	unsigned qry_posn;
 	kcl_str* tmp_str;
-	FILE * template_file = fopen(kcl_str_to_cstr_new(template->file->lname, arena_lcl), "r");
+	FILE * template_file = fopen(kcl_str_to_cstr_new(template->file->src_path, arena_lcl), "r");
 	if (template_file) {
 		fstat(fileno(template_file), &file_info);
 		//kcl_str* file_str = kcl_str_new("", file_info.st_size, arena);
@@ -89,7 +89,7 @@ load_templates(kcl_arena* arena)
 		template->file = cur_file;
 		template->template_tree = kcl_lst_alloc_list(LNKLST, arena, 0);
 		load_template(template, arena);
-		kcl_lst_add_datum_w_key(gstate.templates, template, cur_file->fname);
+		kcl_lst_add_datum_w_key(gstate.templates, template, cur_file->file_name);
 		cur_file = kcl_lst_get_next(gstate.files_templates);
 	}
 
