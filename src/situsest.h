@@ -39,6 +39,8 @@
 struct gstate {
 	char *input_dir;
 	char *output_dir;
+	size_t input_dir_str_len;
+	size_t output_dir_str_len;
 	char **file_list;
 	char *cur_pattern;
 	regex_t cur_regex;

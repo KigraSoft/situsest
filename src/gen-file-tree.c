@@ -51,10 +51,8 @@ diag_print_file_list(struct kcl_list *file_list, char* title_str, kcl_arena* are
 
 static bool
 gen_file_lists_scandir(char* src_dir_str, size_t src_dir_str_len, kcl_arena *arena_local) {
-	//char* src_dir_str = dir;
-	//size_t src_dir_str_len = strlen(src_dir_str);
-	size_t input_dir_str_len = strlen(gstate.input_dir);
-	//size_t export_dir_str_len = strlen(gstate.output_dir); // doing this repeatedly?; should be stashed somewhere?
+	//size_t input_dir_str_len = strlen(gstate.input_dir);
+	size_t input_dir_str_len = gstate.input_dir_str_len;
 	struct dirent* entry;
 	size_t file_name_len;
 	char* sub_dir_str;
@@ -126,7 +124,8 @@ gen_file_lists(kcl_arena* arena_lnklst)
 	gstate.files_templates = kcl_lst_alloc_list(LNKLST, arena_lnklst, 0);
 
 	char* src_dir_str = gstate.input_dir;
-	size_t src_dir_str_len = strlen(src_dir_str);
+	size_t src_dir_str_len = gstate.input_dir_str_len;
+	//size_t src_dir_str_len = strlen(src_dir_str);
 	if (src_dir_str[src_dir_str_len - 1] != '/') {
 		src_dir_str = kcl_arn_push(arena_local, src_dir_str_len + 2); // could be arena_lcl
 		memcpy(src_dir_str, gstate.input_dir, src_dir_str_len);

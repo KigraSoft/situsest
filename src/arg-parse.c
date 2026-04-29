@@ -56,6 +56,7 @@ parse_opt(int key, char *arg, struct argp_state *state)
 		break;
 	case 'o':
 		gstate.output_dir = arg;
+		gstate.output_dir_str_len = strlen(gstate.output_dir);
 		break;
 	case 'd':
 		gstate.sync_dest = true;
@@ -64,6 +65,7 @@ parse_opt(int key, char *arg, struct argp_state *state)
 		if (state->arg_num >= 1)
 			argp_usage(state);
 		gstate.input_dir = arg;
+		gstate.input_dir_str_len = strlen(gstate.input_dir);
 		break;
 	case ARGP_KEY_END:
 		break;
