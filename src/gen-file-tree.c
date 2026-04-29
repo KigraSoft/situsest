@@ -50,14 +50,15 @@ diag_print_file_list(struct kcl_list *file_list, char* title_str, kcl_arena* are
 }
 
 static bool
-gen_file_lists_scandir(char* dir, kcl_arena *arena_local) {
-	char* src_dir_str = dir;
-	size_t src_dir_str_len = strlen(src_dir_str);
+gen_file_lists_scandir(char* src_dir_str, size_t src_dir_str_len, kcl_arena *arena_local) {
+	//char* src_dir_str = dir;
+	//size_t src_dir_str_len = strlen(src_dir_str);
 	size_t input_dir_str_len = strlen(gstate.input_dir);
 	//size_t export_dir_str_len = strlen(gstate.output_dir); // doing this repeatedly?; should be stashed somewhere?
 	struct dirent* entry;
 	size_t file_name_len;
 	char* sub_dir_str;
+	size_t sub_dir_str_len;
 	DIR* dir_list = opendir(src_dir_str);
 	if (!dir_list) {
 		return (false);
@@ -66,13 +67,15 @@ gen_file_lists_scandir(char* dir, kcl_arena *arena_local) {
 			if (entry->d_name[0] != '.') {
 				file_name_len = strlen(entry->d_name);
 				if (entry->d_type == DT_DIR) {
-					sub_dir_str = kcl_arn_push(arena_local, (src_dir_str_len + file_name_len + 2)); // arena_func
+					//sub_dir_str = kcl_arn_push(arena_local, (src_dir_str_len + file_name_len + 2)); // arena_func
+					sub_dir_str_len = src_dir_str_len + file_name_len + 2;
+					sub_dir_str = kcl_arn_push(arena_local, sub_dir_str_len);
 					if (sub_dir_str) {
 						memcpy(sub_dir_str, src_dir_str, src_dir_str_len);
 						memcpy(sub_dir_str + src_dir_str_len, entry->d_name, file_name_len);
 						sub_dir_str[src_dir_str_len + file_name_len] = '/';
 						sub_dir_str[src_dir_str_len + file_name_len + 1] = 0;
-						gen_file_lists_scandir(sub_dir_str, arena_local);
+						gen_file_lists_scandir(sub_dir_str, sub_dir_str_len, arena_local);
 					} else { return (false); }
 				} else {
 					struct file_list_node *file = kcl_arn_push(gstate.files_all->arena, sizeof (struct file_list_node));
@@ -131,7 +134,7 @@ gen_file_lists(kcl_arena* arena_lnklst)
 		src_dir_str_len++;
 	}
 
-	gen_file_lists_scandir(src_dir_str, arena_local);
+	gen_file_lists_scandir(src_dir_str, src_dir_str_len, arena_local);
 
 	if (gstate.diagnostics) {
 		kcl_arn_mem_display(arena_local, (uintptr_t)arena_local, 128);
